@@ -5,6 +5,10 @@ render_module_page([
     'title' => 'Service',
     'singular' => 'Service Record',
     'description' => 'Day jobs - short operations and routine service tracking.',
+    'toolbar_links' => [
+        ['href' => 'tyre-logs',    'label' => 'Tyre Change Logs',    'class' => ''],
+        ['href' => 'battery-logs', 'label' => 'Battery Change Logs', 'class' => ''],
+    ],
     'endpoint' => 'api/services.php?action=create',
     'delete_endpoint' => 'api/services.php?action=delete',
     'sql' => "SELECT sr.id, sr.service_date, v.fleet_number, v.registration, sr.service_type, sr.odometer_at_service, m.full_name AS mechanic_name, sr.next_service_date

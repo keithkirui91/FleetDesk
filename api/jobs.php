@@ -66,24 +66,64 @@ try {
         json_success(['id' => $id, 'reference' => $input['job_reference']]);
     }
 
-    if ($action === 'update') {
-        $input = request_json();
-        $id = (int)($_GET['id'] ?? $input['id'] ?? 0);
-        if (!$id) {
-            json_error('Missing job id.');
-        }
+if ($action === 'update') {
+    $input = request_json();
+    $id = (int)($_GET['id'] ?? $input['id'] ?? 0);
 
-        if (!empty($input['status']) && $input['status'] === 'closed' && empty($input['date_closed'])) {
-            $input['date_closed'] = date('Y-m-d');
-        }
-        update_row('job_cards', $fields, $id, $input);
-
-        $job = db_one('SELECT vehicle_id, status FROM job_cards WHERE id = ?', 'i', [$id]);
-        if ($job) {
-            sync_vehicle_status_for_job((int)$job['vehicle_id'], $job['status']);
-        }
-        json_success(['id' => $id]);
+    if (!$id) {
+        json_error('Missing job id.');
     }
+
+    // Append a new note to the history
+    if (!empty($input['new_note'])) {
+        $existing = db_one(
+            'SELECT resolution_notes FROM job_cards WHERE id = ?',
+            'i',
+            [$id]
+        );
+
+        $history = $existing['resolution_notes'] ?? '';
+
+        $stamp = date('d/m/Y H:i');
+
+$entry =
+    '[' . $stamp . ']' .
+    "\n" .
+    trim($input['new_note']);
+
+        $input['resolution_notes'] =
+            $history
+                ? $history . "\n\n\n" . $entry
+                : $entry;
+    }
+
+    unset($input['new_note']);
+
+    if (
+        !empty($input['status']) &&
+        $input['status'] === 'closed' &&
+        empty($input['date_closed'])
+    ) {
+        $input['date_closed'] = date('Y-m-d');
+    }
+
+    update_row('job_cards', $fields, $id, $input);
+
+    $job = db_one(
+        'SELECT vehicle_id, status FROM job_cards WHERE id = ?',
+        'i',
+        [$id]
+    );
+
+    if ($job) {
+        sync_vehicle_status_for_job(
+            (int)$job['vehicle_id'],
+            $job['status']
+        );
+    }
+
+    json_success(['id' => $id]);
+}
 
     if ($action === 'delete') {
         $input = request_json();

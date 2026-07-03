@@ -141,25 +141,78 @@ include __DIR__ . '/sidebar.php';
 </div>
 
 <div class="modal-backdrop" id="jobModal">
-    <div class="modal">
+    <div class="modal" style="max-width:900px;width:95vw;">
         <header>
             <h2>Job Details</h2>
-            <button class="btn btn-small" type="button" data-close-job>Close</button>
+            <button class="btn btn-small" type="button" data-close-job>
+                Close
+            </button>
         </header>
+
         <div class="detail-grid" data-job-detail></div>
+
+        <hr style="margin:20px 0;border:none;border-top:1px solid #e5e7eb;">
+
         <form class="job-status-form" data-job-status-form>
             <input type="hidden" name="id">
+
             <div class="form-row">
-                <label>Update status</label>
+                <label>Update Status</label>
                 <select class="select" name="status" required>
                     <option value="in_progress">In Progress</option>
                     <option value="awaiting_parts">Awaiting Parts</option>
                     <option value="closed">Closed</option>
                 </select>
             </div>
-            <footer>
-                <button class="btn btn-danger" type="button" data-job-delete>Delete Job</button>
-                <button class="btn btn-primary" type="submit">Update Job</button>
+
+            <div class="form-row full" style="margin-top:20px;">
+                <label>Resolution Notes</label>
+
+                <textarea
+                    id="notesHistory"
+                    class="input"
+                    rows="10"
+                    readonly
+                    style="
+                        background:#f8fafc;
+                        color:#475569;
+                        font-family:monospace;
+                        resize:vertical;
+                        white-space:pre-wrap;
+                    "
+                ></textarea>
+
+                <small class="subtle">
+                    Workshop history and previous updates.
+                </small>
+            </div>
+
+            <div class="form-row full" style="margin-top:20px;">
+                <label>Add Update</label>
+
+                <textarea
+                    class="input"
+                    name="new_note"
+                    rows="4"
+                    placeholder="Parts ordered, supplier contacted, repairs completed..."
+                ></textarea>
+            </div>
+
+            <footer style="margin-top:20px;">
+                <button
+                    class="btn btn-danger"
+                    type="button"
+                    data-job-delete
+                >
+                    Delete Job
+                </button>
+
+                <button
+                    class="btn btn-primary"
+                    type="submit"
+                >
+                    Save Update
+                </button>
             </footer>
         </form>
     </div>
@@ -167,36 +220,117 @@ include __DIR__ . '/sidebar.php';
 
 <script>
 let activeJob = null;
+
 document.addEventListener('DOMContentLoaded', function () {
     const jobModal = document.getElementById('jobModal');
+    const form = document.querySelector('[data-job-status-form]');
+
     document.querySelectorAll('[data-job-view]').forEach(function (button) {
         button.addEventListener('click', function () {
             const row = button.closest('tr');
-            activeJob = JSON.parse(row.dataset.record || '{}');
-            document.querySelector('[data-job-status-form] [name="id"]').value = activeJob.id;
-            document.querySelector('[data-job-status-form] [name="status"]').value = activeJob.status;
-            document.querySelector('[data-job-detail]').innerHTML = Object.entries(activeJob)
-                .filter(function (entry) { return entry[0] !== 'id'; })
-                .map(function (entry) {
-                    return '<div class="detail-item"><span>' + entry[0].replaceAll('_', ' ') + '</span><strong>' + (entry[1] ?? '') + '</strong></div>';
-                }).join('');
+
+            activeJob = JSON.parse(
+                row.dataset.record || '{}'
+            );
+
+            form.elements.id.value =
+                activeJob.id;
+
+            form.elements.status.value =
+                activeJob.status;
+
+            document.getElementById(
+                'notesHistory'
+            ).value =
+                activeJob.resolution_notes || '';
+
+            form.elements.new_note.value = '';
+
+            document.querySelector(
+                '[data-job-detail]'
+            ).innerHTML =
+                Object.entries(activeJob)
+                    .filter(function (entry) {
+                        return ![
+                            'id',
+                            'resolution_notes'
+                        ].includes(entry[0]);
+                    })
+                    .map(function (entry) {
+                        return `
+                            <div class="detail-item">
+                                <span>${entry[0].replaceAll('_', ' ')}</span>
+                                <strong>${entry[1] ?? ''}</strong>
+                            </div>
+                        `;
+                    })
+                    .join('');
+
             jobModal.classList.add('open');
         });
     });
-    document.querySelectorAll('[data-close-job]').forEach(function (button) {
-        button.addEventListener('click', function () { jobModal.classList.remove('open'); });
+
+    document.querySelectorAll(
+        '[data-close-job]'
+    ).forEach(function (button) {
+        button.addEventListener(
+            'click',
+            function () {
+                jobModal.classList.remove('open');
+            }
+        );
     });
-    document.querySelector('[data-job-status-form]').addEventListener('submit', async function (event) {
-        event.preventDefault();
-        const payload = { id: this.elements.id.value, status: this.elements.status.value };
-        await fdFetch('api/jobs.php?action=update', { method: 'POST', body: JSON.stringify(payload) });
-        window.location.reload();
-    });
-    document.querySelector('[data-job-delete]').addEventListener('click', async function () {
-        if (!activeJob || !confirm('Delete this job card? This cannot be undone.')) return;
-        await fdFetch('api/jobs.php?action=delete', { method: 'POST', body: JSON.stringify({ id: activeJob.id }) });
-        window.location.reload();
-    });
+
+    form.addEventListener(
+        'submit',
+        async function (event) {
+            event.preventDefault();
+
+            const payload = {
+                id: this.elements.id.value,
+                status: this.elements.status.value,
+                new_note: this.elements.new_note.value.trim()
+            };
+
+            await fdFetch(
+                'api/jobs.php?action=update',
+                {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                }
+            );
+
+            window.location.reload();
+        }
+    );
+
+    document.querySelector(
+        '[data-job-delete]'
+    ).addEventListener(
+        'click',
+        async function () {
+            if (
+                !activeJob ||
+                !confirm(
+                    'Delete this job card? This cannot be undone.'
+                )
+            ) {
+                return;
+            }
+
+            await fdFetch(
+                'api/jobs.php?action=delete',
+                {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        id: activeJob.id
+                    })
+                }
+            );
+
+            window.location.reload();
+        }
+    );
 });
 </script>
 <?php include __DIR__ . '/footer.php'; ?>

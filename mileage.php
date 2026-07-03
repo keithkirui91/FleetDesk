@@ -20,7 +20,7 @@ render_module_page([
         ['key' => 'notes', 'label' => 'Notes'],
     ],
     'fields' => [
-        ['name' => 'vehicle_id', 'label' => 'Vehicle', 'type' => 'select', 'options' => vehicle_options(), 'required' => true],
+        ['name' => 'vehicle_id', 'label' => 'Vehicle', 'type' => 'select', 'options' => active_vehicle_options(), 'required' => true, 'lookup' => true],
         ['name' => 'odometer_reading', 'label' => 'Odometer', 'type' => 'number', 'required' => true],
         ['name' => 'location', 'label' => 'Location', 'type' => 'select', 'options' => ['gate_in' => 'Gate in', 'gate_out' => 'Gate out', 'workshop' => 'Workshop', 'service' => 'Service', 'fuel' => 'Fuel', 'other' => 'Other']],
         ['name' => 'logged_at', 'label' => 'Logged at', 'type' => 'datetime-local'],

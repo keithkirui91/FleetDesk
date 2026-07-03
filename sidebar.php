@@ -1,13 +1,15 @@
 <?php
 $nav_items = [
-    ['dashboard.php', 'grid', 'Dashboard'],
-    ['fleet.php', 'truck', 'Fleet'],
-    ['jobs.php', 'tool', 'Job Cards'],
-    ['services.php', 'calendar', 'Service'],
-    ['fuel.php', 'droplet', 'Fuel'],
-    ['mechanics.php', 'users', 'Mechanics'],
-    ['mileage.php', 'clock', 'Mileage'],
-    ['reports.php', 'bar-chart', 'Reports'],
+    ['dashboard.php',         'grid',      'Dashboard'],
+    ['fleet.php',             'truck',     'Fleet'],
+    ['drivers.php',           'users',     'Drivers'],
+    ['driver-allocations.php','users',     'Driver Allocations'],
+    ['jobs.php',              'tool',      'Job Cards'],
+    ['services.php',          'calendar',  'Service'],
+    ['fuel.php',              'droplet',   'Fuel'],
+    ['mechanics.php',         'users',     'Mechanics'],
+    ['mileage.php',           'clock',     'Mileage'],
+    ['reports.php',           'bar-chart', 'Reports'],
 ];
 $active = current_page();
 ?>

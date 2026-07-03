@@ -46,6 +46,28 @@ function current_page(): string
     return basename($_SERVER['SCRIPT_NAME'] ?? '', '.php');
 }
 
+function current_odometer_sql(string $vehicleAlias = 'v'): string
+{
+    $vehicleId = $vehicleAlias . '.id';
+    return "COALESCE((
+        SELECT reading
+        FROM (
+            SELECT ol.vehicle_id, ol.odometer_reading AS reading, ol.logged_at AS reading_at, ol.id AS source_id
+            FROM odometer_logs ol
+            UNION ALL
+            SELECT sr.vehicle_id, sr.odometer_at_service AS reading, sr.created_at AS reading_at, sr.id AS source_id
+            FROM service_records sr
+            WHERE sr.odometer_at_service IS NOT NULL
+            UNION ALL
+            SELECT fl.vehicle_id, fl.odometer_at_fill AS reading, fl.created_at AS reading_at, fl.id AS source_id
+            FROM fuel_logs fl
+        ) odometer_sources
+        WHERE odometer_sources.vehicle_id = $vehicleId
+        ORDER BY reading_at DESC, source_id DESC
+        LIMIT 1
+    ), 0)";
+}
+
 function fd_icon(string $name): string
 {
     $icons = [
@@ -60,6 +82,7 @@ function fd_icon(string $name): string
         'plus' => '<path d="M12 5v14M5 12h14"/>',
         'search' => '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
         'logout' => '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/>',
+        'archive' => '<rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v12h14V8M10 12h4"/>',
     ];
 
     return '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . ($icons[$name] ?? $icons['grid']) . '</svg>';

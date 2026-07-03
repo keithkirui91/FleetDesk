@@ -25,6 +25,13 @@ try {
         if (empty($input['vehicle_id']) || empty($input['odometer_reading']) || empty($input['location'])) {
             json_error('Vehicle, mileage, and movement/location are required.');
         }
+        $vehicle = db_one('SELECT status FROM vehicles WHERE id = ?', 'i', [(int)$input['vehicle_id']]);
+        if (!$vehicle) {
+            json_error('Vehicle not found.', 404);
+        }
+        if ($vehicle['status'] !== 'active') {
+            json_error('Only active vehicles can receive mileage log updates.', 422);
+        }
         $id = insert_row('odometer_logs', $fields, $input);
         json_success(['id' => $id]);
     }

@@ -2,7 +2,7 @@
 require_once __DIR__ . '/gate_auth_check.php';
 require_once __DIR__ . '/db.php';
 
-$vehicles = db_all("SELECT id, fleet_number, registration, make, model FROM vehicles WHERE status <> 'decommissioned' ORDER BY fleet_number");
+$vehicles = db_all("SELECT id, fleet_number, registration, make, model, status FROM vehicles WHERE status = 'active' ORDER BY fleet_number");
 ?>
 <!doctype html>
 <html lang="en">
@@ -19,10 +19,13 @@ $vehicles = db_all("SELECT id, fleet_number, registration, make, model FROM vehi
         <form data-gate-mileage-form>
             <div class="form-row">
                 <label for="vehicle_id">Vehicle</label>
+                <input class="input vehicle-select-search" type="text" placeholder="Type fleet no, registration, make or model" data-search-select="vehicle_id">
+                <div class="vehicle-status-note" data-status-for="vehicle_id">Only active vehicles can be logged.</div>
                 <select class="select" id="vehicle_id" name="vehicle_id" required>
                     <option value="">Select vehicle...</option>
                     <?php foreach ($vehicles as $vehicle): ?>
-                        <option value="<?= e($vehicle['id']) ?>"><?= e($vehicle['fleet_number'] . ' - ' . $vehicle['registration'] . ' (' . $vehicle['make'] . ' ' . $vehicle['model'] . ')') ?></option>
+                        <?php $search = strtolower($vehicle['fleet_number'] . ' ' . $vehicle['registration'] . ' ' . $vehicle['make'] . ' ' . $vehicle['model'] . ' ' . $vehicle['status']); ?>
+                        <option value="<?= e($vehicle['id']) ?>" data-status="<?= e($vehicle['status']) ?>" data-search="<?= e($search) ?>"><?= e($vehicle['fleet_number'] . ' - ' . $vehicle['registration'] . ' (' . $vehicle['make'] . ' ' . $vehicle['model'] . ')') ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>

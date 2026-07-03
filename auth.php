@@ -50,6 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $adminCount === 0) {
 <!doctype html>
 <html lang="en">
 <head>
+    <meta name="google-site-verification" content="TyPxQjuEjnElCKSS-ABW195LVWh0cGYLsJqPi6hlxng" />
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Admin Setup - FleetDesk</title>

@@ -53,6 +53,9 @@ function update_row(string $table, array $fields, int $id, array $input): void
     $values = [];
     foreach ($fields as $field) {
         if (array_key_exists($field, $input)) {
+            if ($input[$field] === '' || $input[$field] === null) {
+                continue;
+            }
             $sets[] = $field . ' = ?';
             $values[] = clean_nullable($input[$field]);
         }

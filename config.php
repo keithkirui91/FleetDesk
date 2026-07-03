@@ -10,10 +10,10 @@ $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 define('BASE_URL', $scheme . '://' . $host);
 
 // Use Railway MySQL environment variables if available, otherwise fall back to external DB
-define('DB_HOST', getenv('MYSQLHOST') ?: 'sql113.infinityfree.com');
-define('DB_NAME', getenv('MYSQLDATABASE') ?: 'if0_38642919_fleetdeskb');
-define('DB_USER', getenv('MYSQLUSER') ?: 'if0_38642919');
-define('DB_PASS', getenv('MYSQLPASSWORD') ?: 'KimKeiChaR69');
+define('DB_HOST', getenv('MYSQLHOST') ?: 'mysql.railway.internal');
+define('DB_NAME', getenv('MYSQLDATABASE') ?: 'railway');
+define('DB_USER', getenv('MYSQLUSER') ?: 'root');
+define('DB_PASS', getenv('MYSQLPASSWORD') ?: 'WAJpXYscYXMPOSQoRThOSeLpKMYxFmEl');
 define('DB_PORT', (int)(getenv('MYSQLPORT') ?: 3306));
 
 define('SESSION_TIMEOUT', 28800);

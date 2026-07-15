@@ -6,7 +6,9 @@ import { useRouter } from 'next/navigation';
 export default function GateMileagePage() {
   const router = useRouter();
   const [vehicles, setVehicles] = useState([]);
-  const [form, setForm] = useState({ vehicle_id: '', location: 'gate_in', odometer_reading: '', notes: '' });
+  const [primaryDrivers, setPrimaryDrivers] = useState({});
+  const [driverNames, setDriverNames] = useState([]);
+  const [form, setForm] = useState({ vehicle_id: '', driver_name: '', location: 'gate_in', odometer_reading: '', notes: '' });
   const [toast, setToast] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -14,7 +16,22 @@ export default function GateMileagePage() {
     fetch('/api/vehicles').then((r) => r.json()).then((res) => {
       setVehicles((res.data || []).filter((v) => v.status === 'active'));
     }).catch(() => {});
+    fetch('/api/driver-allocations/primary-map').then((r) => r.json()).then((res) => {
+      setPrimaryDrivers(res.data || {});
+    }).catch(() => {});
+    fetch('/api/odometer/driver-names').then((r) => r.json()).then((res) => {
+      setDriverNames(res.data || []);
+    }).catch(() => {});
   }, []);
+
+  function handleVehicleChange(vehicleId) {
+    setForm((f) => ({
+      ...f,
+      vehicle_id: vehicleId,
+      // Prefill the assigned primary driver, but stays fully editable.
+      driver_name: primaryDrivers[vehicleId] || '',
+    }));
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -32,7 +49,7 @@ export default function GateMileagePage() {
         return;
       }
       setToast('Mileage saved.');
-      setForm({ vehicle_id: '', location: 'gate_in', odometer_reading: '', notes: '' });
+      setForm({ vehicle_id: '', driver_name: '', location: 'gate_in', odometer_reading: '', notes: '' });
     } catch {
       setToast('Something went wrong.');
     } finally {
@@ -52,15 +69,33 @@ export default function GateMileagePage() {
         <p>Record vehicles coming into or leaving the compound.</p>
         {toast && <div className={`alert ${toast === 'Mileage saved.' ? 'alert-ok' : 'alert-danger'}`}>{toast}</div>}
         <form onSubmit={handleSubmit}>
-          <div className="form-row">
-            <label htmlFor="vehicle_id">Vehicle</label>
-            <select className="select" id="vehicle_id" required value={form.vehicle_id} onChange={(e) => setForm((f) => ({ ...f, vehicle_id: e.target.value }))}>
-              <option value="">Select vehicle...</option>
-              {vehicles.map((v) => (
-                <option key={v.id} value={v.id}>{v.fleet_number} - {v.registration} ({v.make} {v.model})</option>
-              ))}
-            </select>
-            <div className="vehicle-status-note">Only active vehicles can be logged.</div>
+          <div className="form-row-pair">
+            <div className="form-row">
+              <label htmlFor="vehicle_id">Vehicle</label>
+              <select className="select" id="vehicle_id" required value={form.vehicle_id} onChange={(e) => handleVehicleChange(e.target.value)}>
+                <option value="">Select vehicle...</option>
+                {vehicles.map((v) => (
+                  <option key={v.id} value={v.id}>{v.fleet_number} - {v.registration} ({v.make} {v.model})</option>
+                ))}
+              </select>
+              <div className="vehicle-status-note">Only active vehicles can be logged.</div>
+            </div>
+            <div className="form-row">
+              <label htmlFor="driver_name">Driver</label>
+              <input
+                className="input"
+                id="driver_name"
+                list="driver-name-options"
+                placeholder="Driver name"
+                autoComplete="off"
+                value={form.driver_name}
+                onChange={(e) => setForm((f) => ({ ...f, driver_name: e.target.value }))}
+              />
+              <datalist id="driver-name-options">
+                {driverNames.map((name) => <option key={name} value={name} />)}
+              </datalist>
+              <div className="vehicle-status-note">Defaults to the assigned driver — editable if someone else is driving.</div>
+            </div>
           </div>
           <div className="form-row">
             <label htmlFor="location">Movement</label>

@@ -5,10 +5,16 @@ export async function GET(request) {
   const { error } = requireApiSession(request);
   if (error) return error;
 
+  const { searchParams } = new URL(request.url);
+  const months = Math.min(24, Math.max(1, Number(searchParams.get('months') || 6)));
+  const department = searchParams.get('department') || '';
+  const deptFilter = department ? 'AND v.department = ?' : '';
+  const deptParams = department ? [department] : [];
+
   try {
     const [
       totalFleet, activeFleet, inWorkshop, awaitingParts, openJobs, activeDowntime,
-      fleetStatus, downtimeByDept, jobsTimelineRaw, fuelMonthlyRaw, depotBalances,
+      fleetStatus, departments, downtimeByDept, jobsTimelineRaw, fuelMonthlyRaw, depotBalances,
       longestJobs, upcomingServices, expiringDocs,
     ] = await Promise.all([
       dbValue('SELECT COUNT(*) FROM vehicles'),
@@ -18,26 +24,32 @@ export async function GET(request) {
       dbValue("SELECT COUNT(*) FROM job_cards WHERE status <> 'closed'"),
       dbValue("SELECT COALESCE(SUM(DATEDIFF(CURDATE(), date_in)), 0) FROM job_cards WHERE status <> 'closed'"),
       dbAll('SELECT status, COUNT(*) AS total FROM vehicles GROUP BY status'),
+      dbAll("SELECT DISTINCT department FROM vehicles WHERE department IS NOT NULL AND department <> '' ORDER BY department"),
       dbAll(`
         SELECT COALESCE(v.department,'Unassigned') AS department,
                COALESCE(SUM(DATEDIFF(CURDATE(), jc.date_in)), 0) AS downtime_days
         FROM job_cards jc
         JOIN vehicles v ON v.id = jc.vehicle_id
-        WHERE jc.status <> 'closed'
+        WHERE jc.status <> 'closed' ${deptFilter}
         GROUP BY department ORDER BY downtime_days DESC
-      `),
+      `, deptParams),
       dbAll(`
-        SELECT DATE_FORMAT(date_in,'%Y-%m') AS month_key, COUNT(*) AS opened, 0 AS closed
-        FROM job_cards WHERE date_in >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) GROUP BY month_key
+        SELECT DATE_FORMAT(jc.date_in,'%Y-%m') AS month_key, COUNT(*) AS opened, 0 AS closed
+        FROM job_cards jc JOIN vehicles v ON v.id = jc.vehicle_id
+        WHERE jc.date_in >= DATE_SUB(CURDATE(), INTERVAL ? MONTH) ${deptFilter}
+        GROUP BY month_key
         UNION ALL
-        SELECT DATE_FORMAT(date_closed,'%Y-%m') AS month_key, 0 AS opened, COUNT(*) AS closed
-        FROM job_cards WHERE date_closed >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) GROUP BY month_key
-      `),
+        SELECT DATE_FORMAT(jc.date_closed,'%Y-%m') AS month_key, 0 AS opened, COUNT(*) AS closed
+        FROM job_cards jc JOIN vehicles v ON v.id = jc.vehicle_id
+        WHERE jc.date_closed >= DATE_SUB(CURDATE(), INTERVAL ? MONTH) ${deptFilter}
+        GROUP BY month_key
+      `, [months, ...deptParams, months, ...deptParams]),
       dbAll(`
-        SELECT DATE_FORMAT(log_date,'%Y-%m') AS month_key, SUM(litres_filled) AS total_litres
-        FROM fuel_logs WHERE log_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+        SELECT DATE_FORMAT(fl.log_date,'%Y-%m') AS month_key, SUM(fl.litres_filled) AS total_litres
+        FROM fuel_logs fl JOIN vehicles v ON v.id = fl.vehicle_id
+        WHERE fl.log_date >= DATE_SUB(CURDATE(), INTERVAL ? MONTH) ${deptFilter}
         GROUP BY month_key ORDER BY month_key
-      `),
+      `, [months, ...deptParams]),
       dbAll(`
         SELECT fuel_type, dip_litres, reading_date
         FROM fuel_depot_readings fdr1
@@ -47,27 +59,27 @@ export async function GET(request) {
         SELECT v.fleet_number, v.registration, jc.fault_description, jc.status,
                DATEDIFF(COALESCE(jc.date_closed, CURDATE()), jc.date_in) AS days_open
         FROM job_cards jc JOIN vehicles v ON v.id = jc.vehicle_id
-        WHERE jc.status <> 'closed' ORDER BY days_open DESC LIMIT 5
-      `),
+        WHERE jc.status <> 'closed' ${deptFilter}
+        ORDER BY days_open DESC LIMIT 5
+      `, deptParams),
       dbAll(`
         SELECT v.id, v.fleet_number, v.registration, v.department, v.next_service_date, v.next_service_mileage,
                ${currentOdometerSql('v')} AS current_odometer
-        FROM v_upcoming_placeholder
-      `.replace('v_upcoming_placeholder', 'vehicles v')
-       + ` WHERE v.status <> 'decommissioned' AND (
+        FROM vehicles v
+        WHERE v.status <> 'decommissioned' ${deptFilter} AND (
              (v.next_service_date IS NOT NULL AND v.next_service_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY))
              OR v.next_service_mileage IS NOT NULL
            )
-           ORDER BY v.next_service_date ASC LIMIT 10`),
+           ORDER BY v.next_service_date ASC LIMIT 10
+      `, deptParams),
       dbAll(`
-        SELECT fleet_number, registration, department, insurance_expiry, licence_expiry
-        FROM vehicles
-        WHERE status <> 'decommissioned'
-          AND (insurance_expiry <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
-               OR licence_expiry <= DATE_ADD(CURDATE(), INTERVAL 30 DAY))
-        ORDER BY LEAST(COALESCE(insurance_expiry,'9999-12-31'), COALESCE(licence_expiry,'9999-12-31')) ASC
+        SELECT fleet_number, registration, department, licence_expiry
+        FROM vehicles v
+        WHERE status <> 'decommissioned' ${deptFilter}
+          AND licence_expiry <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+        ORDER BY COALESCE(licence_expiry,'9999-12-31') ASC
         LIMIT 10
-      `),
+      `, deptParams),
     ]);
 
     // Merge jobs timeline months (opened/closed rows into one per month)
@@ -88,6 +100,7 @@ export async function GET(request) {
         openJobs: Number(openJobs),
         activeDowntimeDays: Number(activeDowntime),
       },
+      filters: { months, department, departments: departments.map((d) => d.department) },
       fleetStatus,
       downtimeByDept,
       jobsTimeline: Array.from(timelineMap.values()).sort((a, b) => a.month_key.localeCompare(b.month_key)),

@@ -16,7 +16,7 @@ const config = {
     'vin_chassis', 'engine_number', 'engine_size', 'engine_capacity', 'transmission',
     'drive_type', 'seating_capacity', 'payload_capacity_kg', 'tare_weight_kg',
     'gross_weight_kg', 'tyre_size_standard', 'logbook_status', 'odometer_status',
-    'inspection_status', 'insurance_expiry', 'next_service_date', 'next_service_mileage',
+    'inspection_status', 'next_service_date', 'next_service_mileage',
   ],
   columns: [
     { key: 'fleet_number', label: 'Fleet No.' },
@@ -66,7 +66,6 @@ const config = {
     ] },
     { name: 'odometer_status', label: 'Odometer Status', type: 'select', options: [{ value: 'working', label: 'Working' }, { value: 'not_working', label: 'Not Working' }] },
     { name: 'inspection_status', label: 'Inspection Status', type: 'select', options: [{ value: 'valid', label: 'Valid' }, { value: 'invalid', label: 'Invalid' }] },
-    { name: 'insurance_expiry', label: 'Insurance Expiry', type: 'date' },
     { name: 'licence_expiry', label: 'Licence Expiry', type: 'date', hideOnAdd: true },
     { name: 'status', label: 'Status', type: 'select', options: [
       { value: 'active', label: 'Active' }, { value: 'in_workshop', label: 'In Workshop' },

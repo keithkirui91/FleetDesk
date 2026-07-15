@@ -1,7 +1,7 @@
 import { requireApiSession, jsonError, jsonSuccess } from '@/lib/auth';
 import { dbAll, dbOne, insertRow } from '@/lib/db';
 
-export const ODOMETER_FIELDS = ['vehicle_id', 'odometer_reading', 'location', 'notes', 'logged_at'];
+export const ODOMETER_FIELDS = ['vehicle_id', 'odometer_reading', 'driver_name', 'location', 'notes', 'logged_at'];
 
 export async function GET(request) {
   const { error } = requireApiSession(request, { allowDataEntry: true });

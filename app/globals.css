@@ -27,6 +27,7 @@ button, input, select, textarea { font: inherit; }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .form-row { display: grid; gap: 4px; margin-bottom: 9px; }
 .form-row.full { grid-column: 1 / -1; }
+.form-row-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 label { color: #334155; font-weight: 700; font-size: 12px; }
 .input, .select, textarea { width: 100%; border: 1px solid var(--line); border-radius: var(--radius); padding: 7px 10px; background: #fff; color: var(--ink); }
 textarea { min-height: 90px; resize: vertical; }
@@ -195,6 +196,8 @@ tbody tr[data-record] { cursor: pointer; }
     font-weight: 700;
     color: #334155;
 }
+.dash-filters { display: flex; align-items: flex-end; gap: 16px; margin: 4px 0 20px; flex-wrap: wrap; }
+.dash-filters label { display: block; font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 4px; }
 .donut-row { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 18px; align-items: center; }
 .donut {
     width: 160px;
@@ -260,7 +263,7 @@ tbody tr[data-record] { cursor: pointer; }
 .job-group .table-wrap { margin-top: 8px; }
 .job-status-form { padding: 0 18px; }
 @media (max-width: 860px) {
-    .form-grid, .card-grid, .dash-grid, .dashboard-layout { grid-template-columns: 1fr; }
+    .form-grid, .card-grid, .dash-grid, .dashboard-layout, .form-row-pair { grid-template-columns: 1fr; }
     .dashboard-layout .wide { grid-column: auto; }
     .donut-row { grid-template-columns: 1fr; }
     .chart-split { grid-template-columns: 1fr; }

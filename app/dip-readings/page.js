@@ -1,13 +1,16 @@
 'use client';
 
+import Link from 'next/link';
 import AppShell from '@/components/AppShell';
 import ModulePage from '@/components/ModulePage';
 
 const config = {
   title: 'Dip Reading Logs',
   singular: 'Dip Reading',
-  description: 'Fuel depot dip readings and stock balance history.',
+  description: 'Manual fuel depot dip readings and stock balance history.',
   endpoint: '/api/fuel-depot',
+  listUrl: '/api/fuel-depot?type=dip_reading',
+  fixedFields: { transaction_type: 'dip_reading' },
   columns: [
     { key: 'reading_date', label: 'Date' },
     { key: 'fuel_type', label: 'Fuel Type', badge: true },
@@ -29,7 +32,7 @@ const config = {
 export default function DipReadingsPage() {
   return (
     <AppShell title="Dip Reading Logs">
-      <ModulePage config={config} />
+      <ModulePage config={config} extraToolbarActions={() => <Link className="btn" href="/fuel-delivery">Fuel Delivery Logs</Link>} />
     </AppShell>
   );
 }

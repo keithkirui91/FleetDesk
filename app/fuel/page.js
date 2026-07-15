@@ -55,10 +55,7 @@ export default function FuelPage() {
 
   return (
     <AppShell title="Fuel">
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
-        <Link className="btn" href="/dip-readings">Dip Reading Logs</Link>
-      </div>
-      <ModulePage config={config} />
+      <ModulePage config={config} extraToolbarActions={() => <Link className="btn" href="/dip-readings">Dip Reading Logs</Link>} />
     </AppShell>
   );
 }

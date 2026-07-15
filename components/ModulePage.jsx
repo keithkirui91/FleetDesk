@@ -60,7 +60,7 @@ function FieldInput({ field, value, onChange }) {
 //   fields: [{name,label,type,required,options,hideOnAdd}],
 //   completenessFields: [], hideAdd, canEdit, canDelete, rowLink(row)
 // }
-export default function ModulePage({ config, extraDetailActions: ExtraDetailActions }) {
+export default function ModulePage({ config, extraDetailActions: ExtraDetailActions, extraToolbarActions: ExtraToolbarActions }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -77,7 +77,7 @@ export default function ModulePage({ config, extraDetailActions: ExtraDetailActi
     setLoading(true);
     setLoadError('');
     try {
-      const res = await fetch(config.endpoint);
+      const res = await fetch(config.listUrl || config.endpoint);
       const json = await res.json();
       if (!json.success) throw new Error(json.error || 'Failed to load.');
       setRows(json.data || []);
@@ -88,7 +88,7 @@ export default function ModulePage({ config, extraDetailActions: ExtraDetailActi
     }
   }
 
-  useEffect(() => { load(); }, [config.endpoint]);
+  useEffect(() => { load(); }, [config.endpoint, config.listUrl]);
 
   const filteredRows = useMemo(() => {
     if (!search.trim()) return rows;
@@ -108,7 +108,7 @@ export default function ModulePage({ config, extraDetailActions: ExtraDetailActi
       const res = await fetch(config.endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(addForm),
+        body: JSON.stringify({ ...addForm, ...(config.fixedFields || {}) }),
       });
       const json = await res.json();
       if (!json.success) throw new Error(json.error || 'Save failed.');
@@ -176,6 +176,7 @@ export default function ModulePage({ config, extraDetailActions: ExtraDetailActi
         </div>
         <div className="toolbar-left">
           <input className="input" placeholder={`Search ${config.title.toLowerCase()}`} value={search} onChange={(e) => setSearch(e.target.value)} />
+          {ExtraToolbarActions && <ExtraToolbarActions />}
           {!config.hideAdd && (
             <button className="btn btn-primary" type="button" onClick={() => { setAddForm({}); setSaveError(''); setShowAdd(true); }}>
               <Plus className="icon" /> Add {config.singular}

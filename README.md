@@ -13,6 +13,43 @@ Next.js (App Router) application, backed by the same MySQL database.
   `layout.css` / `components.css`) was carried over almost verbatim into
   `app/globals.css`
 
+## What's new in this update
+
+- **Battery/Tyre Change Log buttons** on the Service page, next to Add
+  Service Record.
+- **Dashboard**: time-range filter (3/6/12 months), department filter
+  (applies to the jobs timeline, fuel-drawn chart, downtime breakdown,
+  longest-open-jobs, upcoming services, and licence-expiry panels), "View
+  all" links on every panel, and an "Add Fuel Log" button.
+- **Fuel Delivery Logs** (`/fuel-delivery`) — a new page for logging new
+  fuel stock received at the depot. Reachable via a button on the Dip
+  Reading Logs page. Each delivery automatically computes the new tank
+  balance (`previous balance + quantity delivered`) and records it as a new
+  entry in the same depot-balance history used everywhere else (dashboard,
+  auto-deduction on fuel fills, etc.) — so the depot balance is always the
+  most recent entry regardless of whether it came from a manual dip
+  reading, a delivery, or an automatic deduction.
+- **Driver name on mileage logs**: both the gate kiosk (`/gate-mileage`) and
+  the admin Mileage page now have a "Driver" field next to Vehicle. It
+  auto-fills with that vehicle's assigned primary driver when you pick a
+  vehicle, but stays fully editable (relievers, one-off drivers, etc.), and
+  offers an autocomplete dropdown of driver names used before (via a native
+  `<datalist>`, so it still accepts free text that isn't in the list).
+
+### Database change required
+
+Odometer/mileage logs now have a `driver_name` column. `schema.sql` already
+includes it for fresh installs, but if you already have a live database
+(e.g. your Railway deployment), run the one-off migration on top of it:
+
+```bash
+FORCE_MIGRATE=1 npm run migrate -- migrations/002_add_driver_name_to_odometer_logs.sql
+```
+
+(`FORCE_MIGRATE` is needed because the default migrate guard skips
+everything once it sees the `vehicles` table — that guard is meant for
+full schema/data imports, not small targeted migrations like this one.)
+
 ## Getting started
 
 ```bash
@@ -35,7 +72,31 @@ way, after the schema:
 mysql -u youruser -p fleetdesk < your_data_export.sql
 ```
 
-Then run the app:
+### Automatic migration on deploy
+
+`scripts/migrate.js` runs a `.sql` file against the database and is wired in
+as `prestart` in `package.json`, so it runs automatically every time the app
+boots (e.g. on every Railway deploy, since Railway runs `npm start`).
+
+It's **safe to run repeatedly**: before doing anything, it checks whether a
+`vehicles` table already exists and skips if so, so it won't re-import (and
+duplicate) data on every redeploy.
+
+```bash
+npm run migrate                    # runs schema.sql (default)
+npm run migrate -- FD_DB_Export.sql  # runs a specific file instead
+FORCE_MIGRATE=1 npm run migrate    # forces a re-run even if already applied
+```
+
+To have your production data import automatically on first deploy: put your
+full SQL export (schema + data, like a phpMyAdmin dump) in the repo root and
+point `prestart` at it instead of `schema.sql`:
+
+```json
+"prestart": "node scripts/migrate.js your_export.sql"
+```
+
+Then run the app manually (outside of the automatic hook) with:
 
 ```bash
 npm run dev      # http://localhost:3000
@@ -94,12 +155,12 @@ size of the original app:
   jobs timeline, fuel usage, depot balances, longest-open jobs, upcoming
   services, and expiring documents as the original, but as simple bar/column
   visualisations rather than a JS charting library.
-- **`schema.sql` is inferred**, not copied — the original repo didn't
-  include a schema file, only PHP code that referenced tables/columns and a
-  partial data export (vehicles, drivers, vehicle_driver_assignments). The
-  rest of the schema (jobs, services, fuel, depot, odometer, disposals,
-  battery/tyre logs, users) was reconstructed from the API code. Double
-  check it against your real data before going to production.
+- **`schema.sql` was cross-checked against a real production export** from
+  the old app (phpMyAdmin dump) and adjusted to match exactly — e.g. there's
+  no `insurance_expiry` column (the original app never had one; only
+  `licence_expiry` exists). The production dump also has an extra
+  `vehicle_change_logs` table (a field-level audit log) that this app doesn't
+  read or write yet — safe to ignore, or ask if you'd like it wired up.
 - **Existing uploaded images** from the zip (`assets/uploads/...`) were
   copied into `public/uploads/...` with their original filenames, but if
   your imported `vehicles`/`drivers`/`mechanics` rows store old absolute

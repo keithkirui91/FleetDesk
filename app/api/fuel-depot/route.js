@@ -18,6 +18,14 @@ export async function GET(request) {
       `);
       return jsonSuccess(rows);
     }
+    const type = searchParams.get('type');
+    if (type) {
+      const rows = await dbAll(
+        'SELECT * FROM fuel_depot_readings WHERE transaction_type = ? ORDER BY reading_date DESC, id DESC',
+        [type]
+      );
+      return jsonSuccess(rows);
+    }
     const rows = await dbAll('SELECT * FROM fuel_depot_readings ORDER BY reading_date DESC, id DESC');
     return jsonSuccess(rows);
   } catch (e) {
@@ -31,6 +39,10 @@ export async function POST(request) {
   try {
     const input = await request.json();
 
+    if (!input.reading_date || !input.fuel_type) {
+      return jsonError('Date and fuel type are required.');
+    }
+
     if (input.transaction_type === 'stock_received') {
       const fuelType = input.fuel_type || 'diesel';
       const received = Number(input.quantity_litres || input.dip_litres || 0);
@@ -42,6 +54,8 @@ export async function POST(request) {
       );
       const current = latest ? Number(latest.dip_litres) : 0;
       input.dip_litres = current + received;
+    } else if (input.dip_litres === undefined || input.dip_litres === null || input.dip_litres === '') {
+      return jsonError('Dip reading (litres) is required.');
     }
 
     const fields = ['reading_date', 'fuel_type', 'dip_litres', 'transaction_type', 'quantity_litres', 'notes', 'recorded_by'];

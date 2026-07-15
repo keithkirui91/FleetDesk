@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import AppShell from '@/components/AppShell';
 import ModulePage from '@/components/ModulePage';
 
@@ -53,7 +54,15 @@ export default function ServicesPage() {
 
   return (
     <AppShell title="Service">
-      <ModulePage config={config} />
+      <ModulePage
+        config={config}
+        extraToolbarActions={() => (
+          <>
+            <Link className="btn" href="/battery-logs">Battery Change Logs</Link>
+            <Link className="btn" href="/tyre-logs">Tyre Change Logs</Link>
+          </>
+        )}
+      />
     </AppShell>
   );
 }

@@ -1,21 +1,28 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import AppShell from '@/components/AppShell';
-import { Truck, Wrench, Clock, PackageSearch } from 'lucide-react';
+import { Truck, Wrench, Clock, PackageSearch, Fuel } from 'lucide-react';
+
+const MONTH_OPTIONS = [3, 6, 12];
 
 export default function DashboardPage() {
   const [data, setData] = useState(null);
+  const [months, setMonths] = useState(6);
+  const [department, setDepartment] = useState('');
 
   useEffect(() => {
-    fetch('/api/dashboard').then((r) => r.json()).then((res) => setData(res.data));
-  }, []);
+    const params = new URLSearchParams({ months: String(months) });
+    if (department) params.set('department', department);
+    fetch(`/api/dashboard?${params.toString()}`).then((r) => r.json()).then((res) => setData(res.data));
+  }, [months, department]);
 
   if (!data) {
     return <AppShell title="Dashboard"><div className="empty">Loading…</div></AppShell>;
   }
 
-  const { kpis, fleetStatus, downtimeByDept, jobsTimeline, fuelMonthly, depotBalances, longestJobs, upcomingServices, expiringDocs } = data;
+  const { kpis, filters, fleetStatus, downtimeByDept, jobsTimeline, fuelMonthly, depotBalances, longestJobs, upcomingServices, expiringDocs } = data;
   const maxDowntime = Math.max(1, ...downtimeByDept.map((d) => Number(d.downtime_days)));
   const maxTimeline = Math.max(1, ...jobsTimeline.flatMap((m) => [Number(m.opened), Number(m.closed)]));
   const maxFuel = Math.max(1, ...fuelMonthly.map((m) => Number(m.total_litres)));
@@ -55,9 +62,28 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      <div className="dash-filters">
+        <div>
+          <label>Time range</label>
+          <select className="select dashboard-select" value={months} onChange={(e) => setMonths(Number(e.target.value))}>
+            {MONTH_OPTIONS.map((m) => <option key={m} value={m}>Last {m} months</option>)}
+          </select>
+        </div>
+        <div>
+          <label>Department</label>
+          <select className="select dashboard-select" value={department} onChange={(e) => setDepartment(e.target.value)}>
+            <option value="">All departments</option>
+            {(filters?.departments || []).map((d) => <option key={d} value={d}>{d}</option>)}
+          </select>
+        </div>
+        <Link className="btn btn-primary" href="/fuel" style={{ marginLeft: 'auto' }}>
+          <Fuel className="icon" /> Add Fuel Log
+        </Link>
+      </div>
+
       <div className="dashboard-layout">
         <div className="panel">
-          <div className="panel-title-row"><h2>Fleet Status</h2></div>
+          <div className="panel-title-row"><h2>Fleet Status</h2><Link className="view-all-link" href="/fleet">View all</Link></div>
           <div className="mini-card-list">
             {fleetStatus.map((row) => (
               <div className={`mini-card status-card ${row.status}`} key={row.status}>
@@ -83,7 +109,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="panel wide">
-          <div className="panel-title-row"><h2>Jobs Opened vs Closed (last 6 months)</h2></div>
+          <div className="panel-title-row"><h2>Jobs Opened vs Closed (last {months} months)</h2><Link className="view-all-link" href="/jobs">View all</Link></div>
           <div className="column-chart">
             {jobsTimeline.map((m) => (
               <div className="month-col" key={m.month_key}>
@@ -94,6 +120,7 @@ export default function DashboardPage() {
                 <small>{m.month_key}</small>
               </div>
             ))}
+            {jobsTimeline.length === 0 && <div className="subtle">No job activity in this range.</div>}
           </div>
           <div className="chart-key">
             <span><i className="opened" style={{ background: 'var(--brand)' }} /> Opened</span>
@@ -102,16 +129,17 @@ export default function DashboardPage() {
         </div>
 
         <div className="panel">
-          <div className="panel-title-row"><h2>Fuel Drawn (litres, last 6 months)</h2></div>
+          <div className="panel-title-row"><h2>Fuel Drawn (litres, last {months} months)</h2><Link className="view-all-link" href="/fuel">View all</Link></div>
           <div className="area-bars">
             {fuelMonthly.map((m) => (
               <div key={m.month_key} style={{ height: `${(Number(m.total_litres) / maxFuel) * 100}%` }} title={`${m.month_key}: ${m.total_litres}L`} />
             ))}
+            {fuelMonthly.length === 0 && <div className="subtle">No fuel logs in this range.</div>}
           </div>
         </div>
 
         <div className="panel">
-          <div className="panel-title-row"><h2>Depot Balances</h2></div>
+          <div className="panel-title-row"><h2>Depot Balances</h2><Link className="view-all-link" href="/dip-readings">View all</Link></div>
           <div className="table-wrap compact-table">
             <table>
               <thead><tr><th>Fuel Type</th><th>Balance (L)</th><th>As of</th></tr></thead>
@@ -126,7 +154,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="panel wide">
-          <div className="panel-title-row"><h2>Longest Running Open Jobs</h2></div>
+          <div className="panel-title-row"><h2>Longest Running Open Jobs</h2><Link className="view-all-link" href="/jobs">View all</Link></div>
           <div className="table-wrap compact-table">
             <table>
               <thead><tr><th>Vehicle</th><th>Fault</th><th>Status</th><th>Days Open</th></tr></thead>
@@ -146,7 +174,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="panel">
-          <div className="panel-title-row"><h2>Upcoming Services</h2></div>
+          <div className="panel-title-row"><h2>Upcoming Services</h2><Link className="view-all-link" href="/services">View all</Link></div>
           <div className="table-wrap compact-table">
             <table>
               <thead><tr><th>Vehicle</th><th>Next Service</th></tr></thead>
@@ -161,19 +189,18 @@ export default function DashboardPage() {
         </div>
 
         <div className="panel">
-          <div className="panel-title-row"><h2>Insurance / Licence Expiring Soon</h2></div>
+          <div className="panel-title-row"><h2>Licence Expiring Soon</h2><Link className="view-all-link" href="/fleet">View all</Link></div>
           <div className="table-wrap compact-table">
             <table>
-              <thead><tr><th>Vehicle</th><th>Insurance</th><th>Licence</th></tr></thead>
+              <thead><tr><th>Vehicle</th><th>Licence</th></tr></thead>
               <tbody>
                 {expiringDocs.map((row, i) => (
                   <tr key={i}>
                     <td>{row.fleet_number} <span className="muted">{row.registration}</span></td>
-                    <td>{row.insurance_expiry || '—'}</td>
                     <td>{row.licence_expiry || '—'}</td>
                   </tr>
                 ))}
-                {expiringDocs.length === 0 && <tr><td className="empty" colSpan={3}>Nothing expiring soon.</td></tr>}
+                {expiringDocs.length === 0 && <tr><td className="empty" colSpan={2}>Nothing expiring soon.</td></tr>}
               </tbody>
             </table>
           </div>

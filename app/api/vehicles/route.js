@@ -7,7 +7,7 @@ export const VEHICLE_FIELDS = [
   'department', 'vin_chassis', 'engine_number', 'engine_size', 'engine_capacity', 'transmission',
   'drive_type', 'seating_capacity', 'payload_capacity_kg', 'tare_weight_kg',
   'gross_weight_kg', 'tyre_size_standard', 'logbook_status', 'odometer_status',
-  'inspection_status', 'insurance_expiry', 'licence_expiry',
+  'inspection_status', 'licence_expiry',
   'last_service_date', 'next_service_date', 'next_service_mileage',
   'primary_image_url', 'status', 'notes',
 ];

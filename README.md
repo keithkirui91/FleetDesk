@@ -38,17 +38,11 @@ Next.js (App Router) application, backed by the same MySQL database.
 
 ### Database change required
 
-Odometer/mileage logs now have a `driver_name` column. `schema.sql` already
-includes it for fresh installs, but if you already have a live database
-(e.g. your Railway deployment), run the one-off migration on top of it:
-
-```bash
-FORCE_MIGRATE=1 npm run migrate -- migrations/002_add_driver_name_to_odometer_logs.sql
-```
-
-(`FORCE_MIGRATE` is needed because the default migrate guard skips
-everything once it sees the `vehicles` table — that guard is meant for
-full schema/data imports, not small targeted migrations like this one.)
+Odometer/mileage logs now have a `driver_name` column, added via
+`migrations/002_add_driver_name_to_odometer_logs.sql`. As of this update,
+migrations are applied automatically on every deploy (see "Automatic
+migrations on deploy" below) — just push and redeploy, no manual step
+needed.
 
 ## Getting started
 
@@ -72,29 +66,38 @@ way, after the schema:
 mysql -u youruser -p fleetdesk < your_data_export.sql
 ```
 
-### Automatic migration on deploy
+### Automatic migrations on deploy
 
-`scripts/migrate.js` runs a `.sql` file against the database and is wired in
-as `prestart` in `package.json`, so it runs automatically every time the app
-boots (e.g. on every Railway deploy, since Railway runs `npm start`).
+`scripts/migrate.js` is wired in as `prestart` in `package.json`, so it runs
+automatically every time the app boots (e.g. on every Railway deploy, since
+Railway runs `npm start`). It tracks what's been applied in a
+`schema_migrations` table it creates itself, so it's **safe to run on every
+single deploy** — nothing gets re-run or duplicated once it's been applied.
 
-It's **safe to run repeatedly**: before doing anything, it checks whether a
-`vehicles` table already exists and skips if so, so it won't re-import (and
-duplicate) data on every redeploy.
+With no arguments (this is what `prestart` calls), it:
+
+1. Runs `schema.sql` if it hasn't been applied yet. This is safe even
+   against a database that already has tables from somewhere else (e.g. a
+   manually-imported production dump) — every `CREATE TABLE` in
+   `schema.sql` uses `IF NOT EXISTS`, so it only fills in anything missing
+   and never touches or drops existing tables/data.
+2. Runs any new files in `migrations/*.sql`, in filename order, that
+   haven't been recorded yet.
+
+**To make a future schema change roll out automatically:** just add a new
+numbered file to `migrations/` (e.g. `003_add_something.sql`) and push. The
+next deploy picks it up on its own — no CLI, no manual step.
 
 ```bash
-npm run migrate                    # runs schema.sql (default)
-npm run migrate -- FD_DB_Export.sql  # runs a specific file instead
-FORCE_MIGRATE=1 npm run migrate    # forces a re-run even if already applied
+npm run migrate                      # automatic mode (same as prestart)
+npm run migrate -- FDExport.sql      # run one specific file, once, by hand
 ```
 
-To have your production data import automatically on first deploy: put your
-full SQL export (schema + data, like a phpMyAdmin dump) in the repo root and
-point `prestart` at it instead of `schema.sql`:
-
-```json
-"prestart": "node scripts/migrate.js your_export.sql"
-```
+The second form (passing a filename) is for one-off manual actions only —
+importing a full data dump, for example. It always just runs that file
+directly and is **not** tracked in `schema_migrations`, so it's never picked
+up automatically; you run it deliberately, once, when you actually want to
+load that file.
 
 Then run the app manually (outside of the automatic hook) with:
 

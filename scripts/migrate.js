@@ -1,17 +1,34 @@
 // scripts/migrate.js
 //
-// Runs a .sql file (schema and/or data) against the database.
-// Safe to run on every deploy: it checks whether the schema already exists
-// and skips if so, so it won't re-run (and re-INSERT/duplicate data) on
-// every redeploy.
+// Two modes:
+//
+// 1) AUTOMATIC MODE (no arguments) — this is what runs on every deploy via
+//    the "prestart" hook in package.json. It's fully self-tracking:
+//      - Creates a `schema_migrations` table if it doesn't exist.
+//      - Runs schema.sql if it hasn't been applied yet (safe to run even on
+//        a database that already has tables from elsewhere — every CREATE
+//        TABLE in schema.sql uses IF NOT EXISTS, so it only fills in
+//        anything missing and never touches existing tables).
+//      - Runs any new files in migrations/*.sql, in filename order, that
+//        haven't been recorded yet.
+//      - Records each one as it succeeds, so re-running (e.g. next deploy)
+//        skips everything already applied — nothing gets re-run or
+//        duplicated automatically.
+//
+//    To add a schema change in the future: drop a new numbered .sql file in
+//    migrations/ (e.g. 003_something.sql) and it'll be picked up on the
+//    next deploy automatically. No CLI step required.
+//
+// 2) EXPLICIT FILE MODE (node scripts/migrate.js path/to/file.sql) — for
+//    one-off manual actions like importing a full data dump. This always
+//    just runs the file directly; it is NOT tracked in schema_migrations
+//    and is never run automatically. Use this once, by hand, when you want
+//    to load a specific export.
 //
 // Usage:
-//   node scripts/migrate.js                -> runs schema.sql (default)
-//   node scripts/migrate.js path/to/file.sql -> runs a specific file
-//   FORCE_MIGRATE=1 node scripts/migrate.js  -> runs even if already applied
-//
-// Wired into package.json as "prestart", so `npm start` (what Railway runs)
-// triggers it automatically before the server boots.
+//   node scripts/migrate.js                     -> automatic mode
+//   node scripts/migrate.js FDExport.sql         -> run one specific file
+//   node scripts/migrate.js path/to/dump.sql
 
 const fs = require('fs');
 const path = require('path');
@@ -19,7 +36,7 @@ const mysql = require('mysql2/promise');
 
 // Locally, Next.js auto-loads .env.local for the app, but a plain Node
 // script invoked via npm does not. Load it here (only if present) so this
-// works the same way locally as it does on Railway (where env vars are
+// behaves the same locally as it does on Railway (where env vars are
 // already injected into process.env).
 function loadDotEnvLocal() {
   const envPath = path.join(process.cwd(), '.env.local');
@@ -47,42 +64,85 @@ function getConnectionConfig() {
   };
 }
 
-async function alreadyMigrated(conn, database) {
-  const [rows] = await conn.query(
-    `SELECT COUNT(*) AS c FROM information_schema.tables WHERE table_schema = ? AND table_name = 'vehicles'`,
-    [database]
-  );
-  return rows[0].c > 0;
+async function ensureMigrationsTable(conn) {
+  await conn.query(`
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      filename VARCHAR(255) NOT NULL UNIQUE,
+      applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB
+  `);
+}
+
+async function isApplied(conn, filename) {
+  const [rows] = await conn.query('SELECT 1 FROM schema_migrations WHERE filename = ?', [filename]);
+  return rows.length > 0;
+}
+
+async function markApplied(conn, filename) {
+  await conn.query('INSERT INTO schema_migrations (filename) VALUES (?)', [filename]);
+}
+
+async function runFile(conn, filePath, label) {
+  console.log(`[migrate] Running ${label}...`);
+  const sql = fs.readFileSync(filePath, 'utf8');
+  await conn.query(sql);
+  console.log(`[migrate] ${label} applied.`);
+}
+
+async function runAutomatic(conn, repoRoot) {
+  await ensureMigrationsTable(conn);
+
+  // Base schema
+  const schemaPath = path.join(repoRoot, 'schema.sql');
+  if (fs.existsSync(schemaPath)) {
+    if (await isApplied(conn, 'schema.sql')) {
+      console.log('[migrate] schema.sql already applied — skipping.');
+    } else {
+      await runFile(conn, schemaPath, 'schema.sql');
+      await markApplied(conn, 'schema.sql');
+    }
+  }
+
+  // Incremental migrations, in filename order
+  const migrationsDir = path.join(repoRoot, 'migrations');
+  if (fs.existsSync(migrationsDir)) {
+    const files = fs.readdirSync(migrationsDir).filter((f) => f.endsWith('.sql')).sort();
+    for (const file of files) {
+      if (await isApplied(conn, file)) {
+        console.log(`[migrate] ${file} already applied — skipping.`);
+        continue;
+      }
+      await runFile(conn, path.join(migrationsDir, file), file);
+      await markApplied(conn, file);
+    }
+  }
+}
+
+async function runExplicitFile(conn, fileArg, repoRoot) {
+  const filePath = path.isAbsolute(fileArg) ? fileArg : path.join(repoRoot, fileArg);
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`SQL file not found: ${filePath}`);
+  }
+  await runFile(conn, filePath, fileArg);
 }
 
 async function main() {
   loadDotEnvLocal();
 
-  const fileArg = process.argv[2] || 'schema.sql';
-  const filePath = path.isAbsolute(fileArg) ? fileArg : path.join(process.cwd(), fileArg);
-
-  if (!fs.existsSync(filePath)) {
-    console.error(`[migrate] SQL file not found: ${filePath}`);
-    process.exit(1);
-  }
+  const repoRoot = process.cwd();
+  const fileArg = process.argv[2];
 
   const config = getConnectionConfig();
   console.log(`[migrate] Connecting to ${config.host}:${config.port}/${config.database} as ${config.user}...`);
-
   const conn = await mysql.createConnection(config);
 
   try {
-    if (!process.env.FORCE_MIGRATE) {
-      const done = await alreadyMigrated(conn, config.database);
-      if (done) {
-        console.log('[migrate] Schema already present (vehicles table found) — skipping. Set FORCE_MIGRATE=1 to force a re-run.');
-        return;
-      }
+    if (fileArg) {
+      await runExplicitFile(conn, fileArg, repoRoot);
+    } else {
+      await runAutomatic(conn, repoRoot);
     }
-
-    console.log(`[migrate] Running ${filePath}...`);
-    const sql = fs.readFileSync(filePath, 'utf8');
-    await conn.query(sql);
     console.log('[migrate] Done.');
   } finally {
     await conn.end();

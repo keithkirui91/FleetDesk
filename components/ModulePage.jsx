@@ -8,8 +8,64 @@ function Badge({ value }) {
   return <span className={`badge ${value}`}>{String(value).replace(/_/g, ' ')}</span>;
 }
 
-function FieldInput({ field, value, onChange }) {
+function normalizeImageUrl(value) {
+  if (!value) return '';
+  const raw = String(value);
+  if (raw.startsWith('http') || raw.startsWith('/')) return raw;
+  if (raw.startsWith('assets/uploads/')) return `/${raw.replace(/^assets\/uploads\//, 'uploads/')}`;
+  return raw;
+}
+
+async function uploadImage(file, uploadType, id = 0) {
+  const formData = new FormData();
+  formData.append('image', file);
+  const res = await fetch(`/api/upload?type=${uploadType || 'misc'}&id=${id || 0}`, { method: 'POST', body: formData });
+  const json = await res.json();
+  if (!json.success) throw new Error(json.error || 'Image upload failed.');
+  return json.url;
+}
+
+function ImageInput({ field, value, onChange, uploadType, recordId }) {
+  const [preview, setPreview] = useState(normalizeImageUrl(value));
+  const [status, setStatus] = useState('');
+
+  useEffect(() => {
+    setPreview(normalizeImageUrl(value));
+  }, [value]);
+
+  async function handleFile(file) {
+    if (!file) return;
+    setPreview(URL.createObjectURL(file));
+    setStatus('Uploading photo...');
+    try {
+      const url = await uploadImage(file, uploadType, recordId);
+      onChange(url);
+      setPreview(normalizeImageUrl(url));
+      setStatus('Uploaded');
+    } catch (e) {
+      setStatus(e.message);
+    }
+  }
+
+  return (
+    <div className="image-input">
+      <div className="image-preview">
+        {preview ? <img src={preview} alt={field.label} /> : <span>No photo</span>}
+      </div>
+      <label className="btn btn-small">
+        <Plus className="icon" /> Upload Photo
+        <input type="file" accept="image/*" onChange={(e) => handleFile(e.target.files?.[0])} hidden />
+      </label>
+      {status && <small>{status}</small>}
+    </div>
+  );
+}
+
+function FieldInput({ field, value, onChange, uploadType, recordId }) {
   const type = field.type || 'text';
+  if (type === 'image') {
+    return <ImageInput field={field} value={value} onChange={onChange} uploadType={uploadType} recordId={recordId} />;
+  }
   if (type === 'select') {
     return (
       <select
@@ -241,11 +297,13 @@ export default function ModulePage({ config, extraDetailActions: ExtraDetailActi
             <form onSubmit={submitAdd}>
               <div className="form-grid">
                 {fieldsForAdd().map((field) => (
-                  <div key={field.name} className={`form-row ${['textarea', 'checklist'].includes(field.type) ? 'full' : ''}`}>
+                  <div key={field.name} className={`form-row ${['textarea', 'checklist', 'image'].includes(field.type) ? 'full' : ''}`}>
                     <label>{field.label}</label>
                     <FieldInput
                       field={field}
                       value={addForm[field.name]}
+                      uploadType={config.uploadType}
+                      recordId={0}
                       onChange={(v) => setAddForm((f) => ({ ...f, [field.name]: v }))}
                     />
                   </div>
@@ -278,9 +336,31 @@ export default function ModulePage({ config, extraDetailActions: ExtraDetailActi
               </div>
             </header>
 
+            {!editMode && config.imageField && (
+              <div className="record-profile-row">
+                <div className="record-image-pane">
+                  {selected[config.imageField] ? (
+                    <a href={normalizeImageUrl(selected[config.imageField])} target="_blank" rel="noreferrer">
+                      <img src={normalizeImageUrl(selected[config.imageField])} alt={`${config.singular} photo`} />
+                    </a>
+                  ) : (
+                    <div className="record-image-placeholder">No photo</div>
+                  )}
+                </div>
+                <div>
+                  <h3>{selected.fleet_number || selected.full_name || selected.registration || `${config.singular} Details`}</h3>
+                  <div className="record-profile-badges">
+                    {selected.registration && <span className="badge">{selected.registration}</span>}
+                    {selected.department && <span className="badge">{selected.department}</span>}
+                    {selected.status && <Badge value={selected.status} />}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {!editMode && (
               <div className="detail-grid">
-                {config.fields.map((field) => (
+                {config.fields.filter((field) => field.name !== config.imageField).map((field) => (
                   <div className="detail-item" key={field.name}>
                     <span>{field.label}</span>
                     <strong>
@@ -297,11 +377,13 @@ export default function ModulePage({ config, extraDetailActions: ExtraDetailActi
               <form onSubmit={submitEdit}>
                 <div className="form-grid">
                   {config.fields.map((field) => (
-                    <div key={field.name} className={`form-row ${['textarea', 'checklist'].includes(field.type) ? 'full' : ''}`}>
+                    <div key={field.name} className={`form-row ${['textarea', 'checklist', 'image'].includes(field.type) ? 'full' : ''}`}>
                       <label>{field.label}</label>
                       <FieldInput
                         field={field}
                         value={editForm[field.name]}
+                        uploadType={config.uploadType}
+                        recordId={selected.id}
                         onChange={(v) => setEditForm((f) => ({ ...f, [field.name]: v }))}
                       />
                     </div>

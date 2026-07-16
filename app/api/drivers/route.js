@@ -9,7 +9,15 @@ const handlers = buildListCreateHandlers({
   table: 'drivers',
   fields: DRIVER_FIELDS,
   listSql: `SELECT d.*,
-      (SELECT vda.vehicle_id FROM vehicle_driver_assignments vda WHERE vda.driver_id = d.id AND vda.is_active = 1 AND vda.role = 'primary' LIMIT 1) AS current_vehicle_id
+      (SELECT vda.vehicle_id FROM vehicle_driver_assignments vda WHERE vda.driver_id = d.id AND vda.is_active = 1 AND vda.role = 'primary' LIMIT 1) AS current_vehicle_id,
+      COALESCE((
+        SELECT CONCAT(v.fleet_number, ' — ', v.registration)
+        FROM vehicle_driver_assignments vda
+        JOIN vehicles v ON v.id = vda.vehicle_id
+        WHERE vda.driver_id = d.id AND vda.is_active = 1 AND vda.role = 'primary'
+        ORDER BY vda.start_date DESC, vda.id DESC
+        LIMIT 1
+      ), 'Unassigned') AS current_vehicle
     FROM drivers d ORDER BY d.full_name`,
   requiredFields: ['full_name', 'department'],
 });

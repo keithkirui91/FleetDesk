@@ -8,6 +8,8 @@ const config = {
   singular: 'Mechanic',
   description: 'Workshop staff, contacts, specialisations, and active job load.',
   endpoint: '/api/mechanics',
+  imageField: 'photo_url',
+  uploadType: 'mechanic',
   completenessFields: ['employee_id', 'full_name', 'department', 'phone', 'email', 'specialisations', 'date_joined'],
   columns: [
     { key: 'employee_id', label: 'Employee ID' },
@@ -28,6 +30,7 @@ const config = {
     { name: 'specialisations', label: 'Specialisations' },
     { name: 'date_joined', label: 'Date joined', type: 'date' },
     { name: 'is_active', label: 'Status', type: 'select', options: [{ value: '1', label: 'Active' }, { value: '0', label: 'Inactive' }] },
+    { name: 'photo_url', label: 'Photo', type: 'image' },
     { name: 'notes', label: 'Notes', type: 'textarea' },
   ],
 };

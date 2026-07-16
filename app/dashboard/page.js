@@ -11,6 +11,7 @@ export default function DashboardPage() {
   const [data, setData] = useState(null);
   const [months, setMonths] = useState(6);
   const [department, setDepartment] = useState('');
+  const [drilldown, setDrilldown] = useState(null);
 
   useEffect(() => {
     const params = new URLSearchParams({ months: String(months) });
@@ -22,10 +23,22 @@ export default function DashboardPage() {
     return <AppShell title="Dashboard"><div className="empty">Loading…</div></AppShell>;
   }
 
-  const { kpis, filters, fleetStatus, downtimeByDept, jobsTimeline, fuelMonthly, depotBalances, longestJobs, upcomingServices, expiringDocs } = data;
+  const { kpis, filters, fleetStatus, downtimeByDept, jobsTimeline, fuelMonthly, depotBalances, longestJobs, upcomingServices, expiringDocs, fleetStatusVehicles, downtimeVehicles } = data;
   const maxDowntime = Math.max(1, ...downtimeByDept.map((d) => Number(d.downtime_days)));
   const maxTimeline = Math.max(1, ...jobsTimeline.flatMap((m) => [Number(m.opened), Number(m.closed)]));
   const maxFuel = Math.max(1, ...fuelMonthly.map((m) => Number(m.total_litres)));
+  const statusColours = ['#16a34a', '#f59e0b', '#7c3aed', '#94a3b8'];
+  let cursor = 0;
+  const donutStops = fleetStatus.map((row, i) => {
+    const start = cursor;
+    cursor += kpis.totalFleet ? (Number(row.total) / Number(kpis.totalFleet)) * 100 : 0;
+    return `${statusColours[i % statusColours.length]} ${start}% ${cursor}%`;
+  }).join(', ');
+  const drilldownRows = drilldown?.type === 'status'
+    ? (fleetStatusVehicles || []).filter((v) => v.status === drilldown.value)
+    : drilldown?.type === 'department'
+      ? (downtimeVehicles || []).filter((v) => (v.department || 'Unassigned') === drilldown.value)
+      : [];
 
   return (
     <AppShell title="Dashboard">
@@ -76,21 +89,36 @@ export default function DashboardPage() {
             {(filters?.departments || []).map((d) => <option key={d} value={d}>{d}</option>)}
           </select>
         </div>
-        <Link className="btn btn-primary" href="/fuel" style={{ marginLeft: 'auto' }}>
-          <Fuel className="icon" /> Add Fuel Log
-        </Link>
       </div>
 
       <div className="dashboard-layout">
         <div className="panel">
           <div className="panel-title-row"><h2>Fleet Status</h2><Link className="view-all-link" href="/fleet">View all</Link></div>
-          <div className="mini-card-list">
-            {fleetStatus.map((row) => (
-              <div className={`mini-card status-card ${row.status}`} key={row.status}>
-                <span>{String(row.status).replace(/_/g, ' ')}</span>
-                <strong>{row.total}</strong>
-              </div>
-            ))}
+          <div className="fleet-status-chart">
+            <button
+              className="fleet-donut"
+              type="button"
+              style={{ background: `radial-gradient(circle, #fff 0 54%, transparent 55%), conic-gradient(${donutStops || '#e2e8f0 0 100%'})` }}
+              onClick={() => setDrilldown(null)}
+              title="Clear drilldown"
+            >
+              <strong>{kpis.totalFleet}</strong>
+              <span>fleet</span>
+            </button>
+            <div className="legend">
+              {fleetStatus.map((row, i) => (
+                <button
+                  className="legend-row"
+                  type="button"
+                  key={row.status}
+                  onClick={() => setDrilldown({ type: 'status', value: row.status, label: String(row.status).replace(/_/g, ' ') })}
+                >
+                  <i className="dot" style={{ background: statusColours[i % statusColours.length] }} />
+                  <span>{String(row.status).replace(/_/g, ' ')}</span>
+                  <strong>{row.total}</strong>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -99,14 +127,41 @@ export default function DashboardPage() {
           <div className="bar-list">
             {downtimeByDept.length === 0 && <div className="subtle">No open jobs right now.</div>}
             {downtimeByDept.map((row) => (
-              <div className="bar-row" key={row.department}>
+              <button className="bar-row bar-row-button" type="button" key={row.department} onClick={() => setDrilldown({ type: 'department', value: row.department, label: row.department })}>
                 <span>{row.department}</span>
                 <div><i style={{ width: `${(Number(row.downtime_days) / maxDowntime) * 100}%` }} /></div>
                 <strong>{row.downtime_days}d</strong>
-              </div>
+              </button>
             ))}
           </div>
         </div>
+
+        {drilldown && (
+          <div className="panel wide">
+            <div className="panel-title-row">
+              <h2>{drilldown.label} Vehicles</h2>
+              <button className="view-all-link" type="button" onClick={() => setDrilldown(null)}>Clear</button>
+            </div>
+            <div className="table-wrap compact-table">
+              <table>
+                <thead><tr><th>Fleet</th><th>Registration</th><th>Vehicle</th><th>Department</th><th>Status</th><th>Downtime</th></tr></thead>
+                <tbody>
+                  {drilldownRows.map((row) => (
+                    <tr key={row.id}>
+                      <td>{row.fleet_number}</td>
+                      <td>{row.registration}</td>
+                      <td>{row.make} {row.model}</td>
+                      <td>{row.department || 'Unassigned'}</td>
+                      <td><span className={`badge ${row.status}`}>{String(row.status).replace(/_/g, ' ')}</span></td>
+                      <td>{row.downtime_days ? `${row.downtime_days}d` : '—'}</td>
+                    </tr>
+                  ))}
+                  {drilldownRows.length === 0 && <tr><td className="empty" colSpan={6}>No vehicles to show.</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         <div className="panel wide">
           <div className="panel-title-row"><h2>Jobs Opened vs Closed (last {months} months)</h2><Link className="view-all-link" href="/jobs">View all</Link></div>
@@ -139,7 +194,13 @@ export default function DashboardPage() {
         </div>
 
         <div className="panel">
-          <div className="panel-title-row"><h2>Depot Balances</h2><Link className="view-all-link" href="/dip-readings">View all</Link></div>
+          <div className="panel-title-row">
+            <h2>Depot Balances</h2>
+            <div className="panel-actions">
+              <Link className="btn btn-primary btn-small" href="/fuel"><Fuel className="icon" /> Add Fuel Log</Link>
+              <Link className="view-all-link" href="/dip-readings">View all</Link>
+            </div>
+          </div>
           <div className="table-wrap compact-table">
             <table>
               <thead><tr><th>Fuel Type</th><th>Balance (L)</th><th>As of</th></tr></thead>

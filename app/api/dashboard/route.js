@@ -15,7 +15,7 @@ export async function GET(request) {
     const [
       totalFleet, activeFleet, inWorkshop, awaitingParts, openJobs, activeDowntime,
       fleetStatus, departments, downtimeByDept, jobsTimelineRaw, fuelMonthlyRaw, depotBalances,
-      longestJobs, upcomingServices, expiringDocs,
+      longestJobs, upcomingServices, expiringDocs, fleetStatusVehicles, downtimeVehicles,
     ] = await Promise.all([
       dbValue('SELECT COUNT(*) FROM vehicles'),
       dbValue("SELECT COUNT(*) FROM vehicles WHERE status = 'active'"),
@@ -80,6 +80,20 @@ export async function GET(request) {
         ORDER BY COALESCE(licence_expiry,'9999-12-31') ASC
         LIMIT 10
       `, deptParams),
+      dbAll(`
+        SELECT id, fleet_number, registration, make, model, department, status
+        FROM vehicles v
+        WHERE 1=1 ${deptFilter}
+        ORDER BY FIELD(status, 'active', 'in_workshop', 'awaiting_parts', 'decommissioned'), fleet_number
+      `, deptParams),
+      dbAll(`
+        SELECT DISTINCT v.id, v.fleet_number, v.registration, v.make, v.model, v.department, v.status,
+               DATEDIFF(CURDATE(), jc.date_in) AS downtime_days
+        FROM job_cards jc
+        JOIN vehicles v ON v.id = jc.vehicle_id
+        WHERE jc.status <> 'closed' ${deptFilter}
+        ORDER BY v.department, downtime_days DESC, v.fleet_number
+      `, deptParams),
     ]);
 
     // Merge jobs timeline months (opened/closed rows into one per month)
@@ -109,6 +123,8 @@ export async function GET(request) {
       longestJobs,
       upcomingServices,
       expiringDocs,
+      fleetStatusVehicles,
+      downtimeVehicles,
     });
   } catch (e) {
     return jsonError(e.message, 500);

@@ -33,6 +33,9 @@ export default function MileagePage() {
     setForm((f) => ({ ...f, vehicle_id: vehicleId, driver_name: primaryDrivers[vehicleId] || '' }));
   }
 
+  const selectedVehicle = vehicles?.find((v) => String(v.id) === String(form.vehicle_id));
+  const selectedVehicleStatus = selectedVehicle?.status || (selectedVehicle ? 'active' : '');
+
   async function submitAdd(e) {
     e.preventDefault();
     setSaving(true);
@@ -109,6 +112,9 @@ export default function MileagePage() {
                     <option value="">Select...</option>
                     {vehicles.map((v) => <option key={v.id} value={v.id}>{v.label}</option>)}
                   </select>
+                  <div className={`vehicle-status-note ${selectedVehicleStatus}`}>
+                    {selectedVehicle ? `Status: ${selectedVehicleStatus.replace(/_/g, ' ')}` : 'Select a vehicle to see status.'}
+                  </div>
                 </div>
                 <div className="form-row">
                   <label>Driver</label>

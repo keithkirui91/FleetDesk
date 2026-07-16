@@ -10,6 +10,8 @@ const config = {
   singular: 'Driver',
   description: 'Driver profiles, departments, licence dates, and comments.',
   endpoint: '/api/drivers',
+  imageField: 'photo_url',
+  uploadType: 'driver',
   completenessFields: ['full_name', 'department', 'dl_number', 'licence_type', 'licence_renewal_date', 'licence_expiry_date'],
   columns: [
     { key: 'full_name', label: 'Name' },
@@ -18,6 +20,7 @@ const config = {
     { key: 'licence_type', label: 'Licence Type' },
     { key: 'licence_renewal_date', label: 'Renewal Date' },
     { key: 'licence_expiry_date', label: 'Expiry Date' },
+    { key: 'current_vehicle', label: 'Assignment' },
     { key: 'is_active', label: 'Active' },
   ],
   fields: [
@@ -27,6 +30,7 @@ const config = {
     { name: 'licence_type', label: 'Licence Type(s) — comma separated', type: 'text' },
     { name: 'licence_renewal_date', label: 'Licence renewal date', type: 'date' },
     { name: 'licence_expiry_date', label: 'Licence expiry date', type: 'date' },
+    { name: 'photo_url', label: 'Photo', type: 'image' },
     { name: 'is_active', label: 'Status', type: 'select', options: [{ value: '1', label: 'Active' }, { value: '0', label: 'Inactive' }] },
     { name: 'comments', label: 'Comments', type: 'textarea' },
   ],

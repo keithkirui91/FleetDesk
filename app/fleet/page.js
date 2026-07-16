@@ -10,6 +10,8 @@ const config = {
   singular: 'Vehicle',
   description: 'Vehicles, departments, service status, and current odometer readings.',
   endpoint: '/api/vehicles',
+  imageField: 'primary_image_url',
+  uploadType: 'vehicle',
   completenessFields: [
     'fleet_number', 'registration', 'make', 'model', 'year', 'date_acquired',
     'colour', 'fuel_type', 'body_type', 'vehicle_type', 'fleet_type', 'department',
@@ -38,6 +40,7 @@ const config = {
     { name: 'vin_chassis', label: 'Chassis Number' },
     { name: 'engine_number', label: 'Engine Number' },
     { name: 'new_gen_plates', label: 'New Generation Plates', type: 'select', options: [{ value: '0', label: 'No' }, { value: '1', label: 'Yes' }] },
+    { name: 'primary_image_url', label: 'Vehicle Photo', type: 'image' },
     { name: 'vehicle_type', label: 'Vehicle Type', type: 'select', options: [
       { value: 'car', label: 'Car' }, { value: 'van', label: 'Van' }, { value: 'truck', label: 'Truck' },
       { value: 'motorbike', label: 'Motorbike' }, { value: 'construction', label: 'Construction' },

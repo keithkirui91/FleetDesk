@@ -96,11 +96,11 @@ async function runAutomatic(conn, repoRoot) {
   // Base schema
   const schemaPath = path.join(repoRoot, 'FDexport.sql');
   if (fs.existsSync(schemaPath)) {
-    if (await isApplied(conn, 'schema.sql')) {
+    if (await isApplied(conn, 'FDexport.sql')) {
       console.log('[migrate] schema.sql already applied — skipping.');
     } else {
-      await runFile(conn, schemaPath, 'schema.sql');
-      await markApplied(conn, 'schema.sql');
+      await runFile(conn, schemaPath, 'FDexport.sql');
+      await markApplied(conn, 'FDexport.sql');
     }
   }
 

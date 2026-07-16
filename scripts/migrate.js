@@ -94,7 +94,7 @@ async function runAutomatic(conn, repoRoot) {
   await ensureMigrationsTable(conn);
 
   // Base schema
-  const schemaPath = path.join(repoRoot, 'schema.sql');
+  const schemaPath = path.join(repoRoot, 'FDexport.sql');
   if (fs.existsSync(schemaPath)) {
     if (await isApplied(conn, 'schema.sql')) {
       console.log('[migrate] schema.sql already applied — skipping.');

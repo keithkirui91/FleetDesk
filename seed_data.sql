@@ -5,8 +5,7 @@
 -- fuel log rows with a blank issuer name are skipped, service odometer
 -- readings are optional, and odometer in/out + passengers in/out are
 -- merged into one directional reading per row.
-SET FOREIGN_KEY_CHECKS = 0;
-merged into one directional reading per row.
+
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- vehicles (109 rows)

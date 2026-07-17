@@ -1262,7 +1262,7 @@ INSERT INTO odometer_logs (vehicle_id,odometer_reading,direction,driver_name,des
 (70,92980,'gate_out','Philip Songok','Nanyuki',3,'ok','2025-06-30 17:40:00'),
 (64,393460,'gate_in','Solomon Ndirangu','Kamok',1,'ok','2025-06-30 17:57:00'),
 (65,233383,'gate_in','Josphat Maina','Control',3,'ok','2025-06-30 18:28:00'),
-(77,33169,'gate_in','Geoff Wahungu','Site b','One','ok','2025-06-30 18:42:00'),
+(77,33169,'gate_in','Geoff Wahungu','Site b',1,'ok','2025-06-30 18:42:00'),
 (72,58234,'gate_in','James Maitima','Kamok',3,'ok','2025-06-30 20:13:00'),
 (70,93015,'gate_in','Philip Songok','Control',4,'ok','2025-06-30 20:29:00'),
 (103,726256,'gate_in','David Karia','Kamok',30,'ok','2025-07-01 07:15:00'),

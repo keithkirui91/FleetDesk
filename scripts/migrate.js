@@ -1,34 +1,3 @@
-// scripts/migrate.js
-//
-// Two modes:
-//
-// 1) AUTOMATIC MODE (no arguments) — this is what runs on every deploy via
-//    the "prestart" hook in package.json. It's fully self-tracking:
-//      - Creates a `schema_migrations` table if it doesn't exist.
-//      - Runs schema.sql if it hasn't been applied yet (safe to run even on
-//        a database that already has tables from elsewhere — every CREATE
-//        TABLE in schema.sql uses IF NOT EXISTS, so it only fills in
-//        anything missing and never touches existing tables).
-//      - Runs any new files in migrations/*.sql, in filename order, that
-//        haven't been recorded yet.
-//      - Records each one as it succeeds, so re-running (e.g. next deploy)
-//        skips everything already applied — nothing gets re-run or
-//        duplicated automatically.
-//
-//    To add a schema change in the future: drop a new numbered .sql file in
-//    migrations/ (e.g. 003_something.sql) and it'll be picked up on the
-//    next deploy automatically. No CLI step required.
-//
-// 2) EXPLICIT FILE MODE (node scripts/migrate.js path/to/file.sql) — for
-//    one-off manual actions like importing a full data dump. This always
-//    just runs the file directly; it is NOT tracked in schema_migrations
-//    and is never run automatically. Use this once, by hand, when you want
-//    to load a specific export.
-//
-// Usage:
-//   node scripts/migrate.js                     -> automatic mode
-//   node scripts/migrate.js FDExport.sql         -> run one specific file
-//   node scripts/migrate.js path/to/dump.sql
 
 const fs = require('fs');
 const path = require('path');
@@ -101,6 +70,19 @@ async function runAutomatic(conn, repoRoot) {
     } else {
       await runFile(conn, schemaPath, 'schema.sql');
       await markApplied(conn, 'schema.sql');
+    }
+  }
+
+  // Seed data — runs once, right after the base schema and before any
+  // incremental migrations, since later migrations may assume the seeded
+  // rows (vehicles, drivers, etc.) already exist.
+  const seedPath = path.join(repoRoot, 'seed_data.sql');
+  if (fs.existsSync(seedPath)) {
+    if (await isApplied(conn, 'seed_data.sql')) {
+      console.log('[migrate] seed_data.sql already applied — skipping.');
+    } else {
+      await runFile(conn, seedPath, 'seed_data.sql');
+      await markApplied(conn, 'seed_data.sql');
     }
   }
 

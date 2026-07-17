@@ -9,7 +9,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 -- vehicles (109 rows)
 INSERT INTO vehicles (id,fleet_number,registration,make,model,year,date_acquired,new_gen_plates,fuel_type,body_type,vehicle_type,fleet_type,department,vin_chassis,engine_number,engine_size,engine_capacity,transmission,drive_type,seating_capacity,payload_capacity_kg,tare_weight_kg,gross_weight_kg,logbook_status,odometer_status,inspection_status,status,notes) VALUES
-(1,'A04','KMCB 717M','Yamaha','XTZ125E',1997,'1997-11-03',0,'Petrol','Motorcycle','Motorbike','2 Wheels','Tourism','3TT-062825','3TT-062547',NULL,125,NULL,NULL,2,0,98,0,'Available','OK','NA','active','OK'),
+(1,'A04','KMCB717M','Yamaha','XTZ125E',1997,'1997-11-03',0,'Petrol','Motorcycle','Motorbike','2 Wheels','Tourism','3TT-062825','3TT-062547',NULL,125,NULL,NULL,2,0,98,0,'Available','OK','NA','active','OK'),
 (2,'A06','KMCB715M','Yamaha','XTZ125E',1998,'1999-02-16',1,'Petrol','Motorcycle','Motorbike','2 Wheels','Technical Operations','3TT-0092515','3TT-0092030',NULL,125,NULL,NULL,2,0,99,0,'Available','OK','NA','active','Parked awaiting allocation'),
 (3,'A09','KMCB720M','Yamaha','DT125',2004,'2004-12-17',1,'Petrol','Motorcycle','Motorbike','2 Wheels','Wildlife Operations','DE02X-0020571','3TT-0143320',NULL,125,NULL,NULL,2,0,98,0,'Available','OK','NA','active','OK'),
 (4,'A10','KMCB721M','Yamaha','DT125',2005,'2005-11-09',1,'Petrol','Motorcycle','Motorbike','2 Wheels','Technical Operations','DE02X-027699','3TT-150448',NULL,125,NULL,NULL,2,0,98,0,'Available','OK','NA','active','OK'),
@@ -96,7 +96,7 @@ INSERT INTO vehicles (id,fleet_number,registration,make,model,year,date_acquired
 (85,'G04','KDP814E','Isuzu','NQR81K',2023,'2024-01-25',1,'Diesel','Insulated body','Truck','Truck','Livestock','JAAN1R81KN7100810','OTG285',NULL,4778,NULL,NULL,2,6000,2000,8000,'Available','OK','Valid','active','OK'),
 (86,'K03','KAU 426V','Tata','TIPPER',2005,'2005-11-25',1,'Diesel','Tipper','Truck','Truck','Earthworks','TATA-07661',8346,NULL,5883,NULL,NULL,NULL,6900,5300,12200,'Available','OK','Invalid for more than 5 years','active','OK'),
 (87,'K08','KAU 460S','Tata','TIPPER',2005,'2005-11-18',1,'Diesel','Tipper','Truck','Truck','Earthworks','MAT42409252R07692',8128,NULL,5883,NULL,NULL,NULL,6900,5300,12200,'Available','OK','Invalid for more than 5 years','active','OK'),
-(88,'K11','FN520VL','MAN','MAN','Donation',NULL,0,'Diesel','Capture truck','Truck','Truck','Wildlife Operations',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Other','OK','Had never been inspected','active','OK'),
+(88,'K11','FN520VL','MAN','MAN','2020',NULL,0,'Diesel','Capture truck','Truck','Truck','Wildlife Operations',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Other','OK','Had never been inspected','active','OK'),
 (89,'K12','KDP124C','Tata','Tipper',2023,'2005-09-18',1,'Diesel','Tipper','Truck','Truck','Technical Operations (Buildings)',NULL,'Cummins ISBE',NULL,5883,NULL,NULL,NULL,15000,10000,25000,NULL,'OK','Valid','active','OK'),
 (90,'M01','KHMA 869B','CAT','140H',1991,'2012-12-21',1,'Diesel','Motor Grader','Construction','Heavy Plant','Earthworks','2ZK04630','6NC17180',NULL,10500,NULL,NULL,NULL,0,17237,0,NULL,'OK','NA','in_workshop','OK'),
 (91,'M02','KHMA887B','CAT','320BL',1998,'1998-01-10',1,'Diesel','Tracked BH Excavator','Construction','Heavy Plant','Earthworks','7JR01355','4TF46923',NULL,6400,NULL,NULL,NULL,0,21380,0,NULL,'OK','NA','active','OK'),
@@ -437,7 +437,6 @@ INSERT INTO drivers (id,full_name,department,dl_number,licence_type,licence_rene
 (137,'Lokotoi Nabwel','UNKNOWN',NULL,NULL,NULL,NULL,'Auto-created placeholder: driver referenced in an allocation record but not present in the driver list.',1,1),
 (138,'Pul Ntanywa','UNKNOWN',NULL,NULL,NULL,NULL,'Auto-created placeholder: driver referenced in an allocation record but not present in the driver list.',1,1),
 (139,'KENNEDY ETELENG','UNKNOWN',NULL,NULL,NULL,NULL,'Auto-created placeholder: driver referenced in an allocation record but not present in the driver list.',1,1);
-
 
 SET FOREIGN_KEY_CHECKS = 0;
 

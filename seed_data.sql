@@ -440,7 +440,7 @@ INSERT INTO drivers (id,full_name,department,dl_number,licence_type,licence_rene
 
 -- vehicle_driver_assignments (142 rows)
 INSERT INTO vehicle_driver_assignments (vehicle_id,driver_id,role,start_date,end_date,is_active,notes) VALUES
-(1,101,'primary','2026-07-17',NULL,1,'Plumber; OK'),
+(2,101,'primary','2026-07-17',NULL,1,'Plumber; OK'),
 (3,102,'primary','2026-07-17',NULL,1,'Armed Ranger; OK'),
 (4,74,'primary','2026-07-17',NULL,1,'Fencer; OK'),
 (5,103,'primary','2026-07-17',NULL,1,'Fencer; OK'),

@@ -98,7 +98,7 @@ INSERT INTO drivers (id,full_name,department,dl_number,licence_type,licence_rene
 (86,'William Sigui Lesigel','Wildlife Operations','INTERIM','INTERIM','2025-10-09','2026-04-09','Interim DL',1,0),
 (87,'Kinyaga ole Saningo','Security','IDL-AAZXM0','C1','2003-02-02','2026-02-02','Ok',1,0),
 (88,'Anthony maina kibet','Wildlife Operations','XXL83','B,C1,C,CE','2013-12-09','2026-07-08','Ok',1,0),
-(89,'Chris Waigwa','REMU','LIQ178','B,C1,C,D1','2004-10-07','2025-02-30','Expired',1,0),
+(89,'Chris Waigwa','REMU','LIQ178','B,C1,C,D1','2004-10-07','2025-02-3','Expired',1,0),
 (90,'Nicholus Ruto Enyagan','Technical operations','IDL-ABDEH4','A2,B,G','2016-01-21','2026-10-13','Ok',1,0),
 (91,'Thomas omolo omedo','Tourism','DL-ASOLO5Q','B','2025-01-14','2028-01-14','Ok',1,0),
 (92,'Wilson kipchirchir kiptogom','Livestock','LUH1940000','B,C1,C,D1,D2,D3,G','2025-01-27','2028-01-21','Ok',1,0),

@@ -9,7 +9,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 -- vehicles (109 rows)
 INSERT INTO vehicles (id,fleet_number,registration,make,model,year,date_acquired,new_gen_plates,fuel_type,body_type,vehicle_type,fleet_type,department,vin_chassis,engine_number,engine_size,engine_capacity,transmission,drive_type,seating_capacity,payload_capacity_kg,tare_weight_kg,gross_weight_kg,logbook_status,odometer_status,inspection_status,status,notes) VALUES
-(281,'A04','KMCB 717M','Yamaha','XTZ125E',1997,'1997-11-03',0,'Petrol','Motorcycle','Motorbike','2 Wheels','Tourism','3TT-062825','3TT-062547',NULL,125,NULL,NULL,2,0,98,0,'Available','OK','NA','active','OK'),
+(281,'A04','KMCB717M','Yamaha','XTZ125E',1997,'1997-11-03',0,'Petrol','Motorcycle','Motorbike','2 Wheels','Tourism','3TT-062825','3TT-062547',NULL,125,NULL,NULL,2,0,98,0,'Available','OK','NA','active','OK'),
 (2,'A06','KMCB715M','Yamaha','XTZ125E',1998,'1999-02-16',1,'Petrol','Motorcycle','Motorbike','2 Wheels','Technical Operations','3TT-0092515','3TT-0092030',NULL,125,NULL,NULL,2,0,99,0,'Available','OK','NA','active','Parked awaiting allocation'),
 (3,'A09','KMCB720M','Yamaha','DT125',2004,'2004-12-17',1,'Petrol','Motorcycle','Motorbike','2 Wheels','Wildlife Operations','DE02X-0020571','3TT-0143320',NULL,125,NULL,NULL,2,0,98,0,'Available','OK','NA','active','OK'),
 (4,'A10','KMCB721M','Yamaha','DT125',2005,'2005-11-09',1,'Petrol','Motorcycle','Motorbike','2 Wheels','Technical Operations','DE02X-027699','3TT-150448',NULL,125,NULL,NULL,2,0,98,0,'Available','OK','NA','active','OK'),

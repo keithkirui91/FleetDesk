@@ -63,13 +63,13 @@ async function runAutomatic(conn, repoRoot) {
   await ensureMigrationsTable(conn);
 
   // Base schema
-  const schemaPath = path.join(repoRoot, 'schema.sql');
+  const schemaPath = path.join(repoRoot, 'schemab.sql');
   if (fs.existsSync(schemaPath)) {
-    if (await isApplied(conn, 'schema.sql')) {
-      console.log('[migrate] schema.sql already applied — skipping.');
+    if (await isApplied(conn, 'schemab.sql')) {
+      console.log('[migrate] schemab.sql already applied — skipping.');
     } else {
-      await runFile(conn, schemaPath, 'schema.sql');
-      await markApplied(conn, 'schema.sql');
+      await runFile(conn, schemaPath, 'schemab.sql');
+      await markApplied(conn, 'schemab.sql');
     }
   }
 

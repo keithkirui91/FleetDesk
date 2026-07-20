@@ -281,7 +281,7 @@ INSERT INTO import_tyre_change_logs (row_no,fleet_no,reg_no,change_date,odometer
 (219,'D38',NULL,'2026-05-21',NULL,4,NULL,'750X16','Radial',NULL,NULL,'Imported from Tyres&batteries.xlsx tyres row 219.'),
 (220,'D42',NULL,'2026-05-29',NULL,4,NULL,'235X16','Nylon',NULL,NULL,'Imported from Tyres&batteries.xlsx tyres row 220.'),
 (221,'D44',NULL,'2026-05-29',NULL,4,NULL,'235X16','Nylon',NULL,NULL,'Imported from Tyres&batteries.xlsx tyres row 221.'),
-(222,'D12',NULL,'4-Aprl-2026',NULL,4,NULL,'750x18','Radial',NULL,NULL,'Imported from Tyres&batteries.xlsx tyres row 222.'),
+(222,'D12',NULL,'2026-4-4',NULL,4,NULL,'750x18','Radial',NULL,NULL,'Imported from Tyres&batteries.xlsx tyres row 222.'),
 (223,'D32',NULL,'2026-07-20',NULL,4,NULL,NULL,'Radial',NULL,NULL,'Imported from Tyres&batteries.xlsx tyres row 223. Original change date blank; 2026-07-20 used for required change_date.'),
 (224,'D41',NULL,'2026-06-16',NULL,5,NULL,'235/85X16','Radial',NULL,NULL,'Imported from Tyres&batteries.xlsx tyres row 224.'),
 (225,'B10',NULL,'2026-06-18',NULL,4,NULL,'195/80X15','Radial',NULL,NULL,'Imported from Tyres&batteries.xlsx tyres row 225.'),

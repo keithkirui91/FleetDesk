@@ -25,6 +25,18 @@ async function uploadImage(file, uploadType, id = 0) {
   return json.url;
 }
 
+async function safeJson(res) {
+  const text = await res.text();
+  if (!text) {
+    throw new Error(res.ok ? 'Empty response from server.' : `Server returned ${res.status}.`);
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(text.slice(0, 180) || `Server returned ${res.status}.`);
+  }
+}
+
 function ImageInput({ field, value, onChange, uploadType, recordId }) {
   const [preview, setPreview] = useState(normalizeImageUrl(value));
   const [status, setStatus] = useState('');
@@ -118,6 +130,8 @@ function FieldInput({ field, value, onChange, uploadType, recordId }) {
 // }
 export default function ModulePage({ config, extraDetailActions: ExtraDetailActions, extraToolbarActions: ExtraToolbarActions }) {
   const [rows, setRows] = useState([]);
+  const [pagination, setPagination] = useState(null);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [search, setSearch] = useState('');
@@ -133,10 +147,16 @@ export default function ModulePage({ config, extraDetailActions: ExtraDetailActi
     setLoading(true);
     setLoadError('');
     try {
-      const res = await fetch(config.listUrl || config.endpoint);
-      const json = await res.json();
+      const url = new URL(config.listUrl || config.endpoint, window.location.origin);
+      if (config.pageSize) {
+        url.searchParams.set('page', String(page));
+        url.searchParams.set('pageSize', String(config.pageSize));
+      }
+      const res = await fetch(url.toString());
+      const json = await safeJson(res);
       if (!json.success) throw new Error(json.error || 'Failed to load.');
-      setRows(json.data || []);
+      setRows(json.data?.rows || json.data || []);
+      setPagination(json.data?.pagination || null);
     } catch (e) {
       setLoadError(e.message);
     } finally {
@@ -144,7 +164,7 @@ export default function ModulePage({ config, extraDetailActions: ExtraDetailActi
     }
   }
 
-  useEffect(() => { load(); }, [config.endpoint, config.listUrl]);
+  useEffect(() => { load(); }, [config.endpoint, config.listUrl, page]);
 
   const filteredRows = useMemo(() => {
     if (!search.trim()) return rows;
@@ -166,7 +186,7 @@ export default function ModulePage({ config, extraDetailActions: ExtraDetailActi
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...addForm, ...(config.fixedFields || {}) }),
       });
-      const json = await res.json();
+      const json = await safeJson(res);
       if (!json.success) throw new Error(json.error || 'Save failed.');
       setShowAdd(false);
       setAddForm({});
@@ -194,7 +214,7 @@ export default function ModulePage({ config, extraDetailActions: ExtraDetailActi
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editForm),
       });
-      const json = await res.json();
+      const json = await safeJson(res);
       if (!json.success) throw new Error(json.error || 'Update failed.');
       setSelected(null);
       await load();
@@ -210,7 +230,7 @@ export default function ModulePage({ config, extraDetailActions: ExtraDetailActi
     setSaving(true);
     try {
       const res = await fetch(`${config.endpoint}/${selected.id}`, { method: 'DELETE' });
-      const json = await res.json();
+      const json = await safeJson(res);
       if (!json.success) throw new Error(json.error || 'Delete failed.');
       setSelected(null);
       await load();
@@ -286,6 +306,17 @@ export default function ModulePage({ config, extraDetailActions: ExtraDetailActi
           </tbody>
         </table>
       </div>
+
+      {pagination && (
+        <div className="pagination-row">
+          <span>Showing {rows.length} of {pagination.total} records</span>
+          <div>
+            <button className="btn btn-small" type="button" disabled={pagination.page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Previous</button>
+            <strong>Page {pagination.page} of {pagination.totalPages}</strong>
+            <button className="btn btn-small" type="button" disabled={pagination.page >= pagination.totalPages} onClick={() => setPage((p) => p + 1)}>Next</button>
+          </div>
+        </div>
+      )}
 
       {showAdd && (
         <div className="modal-backdrop open">

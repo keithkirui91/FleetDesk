@@ -18,7 +18,8 @@ export async function GET(request) {
       `);
       return jsonSuccess(rows);
     }
-    const type = searchParams.get('type');
+    const rawType = searchParams.get('type') || searchParams.get('transaction_type');
+    const type = rawType === 'delivery' ? 'stock_received' : rawType;
     if (type) {
       const rows = await dbAll(
         'SELECT * FROM fuel_depot_readings WHERE transaction_type = ? ORDER BY reading_date DESC, id DESC',

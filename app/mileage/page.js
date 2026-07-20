@@ -67,6 +67,7 @@ export default function MileagePage() {
     singular: 'Mileage Log',
     description: 'Odometer history for gate, workshop, service, and fuel readings.',
     endpoint: '/api/odometer',
+    pageSize: 30,
     hideAdd: true,
     columns: [
       { key: 'logged_at', label: 'Logged At' },

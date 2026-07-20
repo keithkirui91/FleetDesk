@@ -5,9 +5,13 @@ import { FUEL_FIELDS } from '../route';
 export async function GET(request, { params }) {
   const { error } = requireApiSession(request);
   if (error) return error;
-  const row = await dbOne('SELECT * FROM fuel_logs WHERE id = ?', [Number(params.id)]);
-  if (!row) return jsonError('Fuel log not found.', 404);
-  return jsonSuccess(row);
+  try {
+    const row = await dbOne('SELECT * FROM fuel_logs WHERE id = ?', [Number(params.id)]);
+    if (!row) return jsonError('Fuel log not found.', 404);
+    return jsonSuccess(row);
+  } catch (e) {
+    return jsonError(e.message, 500);
+  }
 }
 
 export async function PUT(request, { params }) {
@@ -29,6 +33,10 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   const { error } = requireApiSession(request);
   if (error) return error;
-  await deleteRow('fuel_logs', Number(params.id));
-  return jsonSuccess({ id: Number(params.id) });
+  try {
+    await deleteRow('fuel_logs', Number(params.id));
+    return jsonSuccess({ id: Number(params.id) });
+  } catch (e) {
+    return jsonError(e.message, e.status || 500);
+  }
 }

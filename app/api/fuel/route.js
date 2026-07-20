@@ -1,5 +1,5 @@
 import { requireApiSession, jsonError, jsonSuccess } from '@/lib/auth';
-import { dbAll, dbOne, insertRow, updateRow, deleteRow, logVehicleMileage, getPool } from '@/lib/db';
+import { dbAll, dbOne, dbValue, insertRow, logVehicleMileage, getPool } from '@/lib/db';
 
 export const FUEL_FIELDS = [
   'vehicle_id', 'log_date', 'odometer_at_fill', 'litres_filled', 'fuel_type',
@@ -26,13 +26,25 @@ async function deductFromDepot(fuelType, litres, date, location) {
 export async function GET(request) {
   const { error } = requireApiSession(request);
   if (error) return error;
+  const { searchParams } = new URL(request.url);
+  const page = Math.max(1, Number(searchParams.get('page') || 1));
+  const requestedPageSize = Number(searchParams.get('pageSize') || 0);
+  const pageSize = requestedPageSize > 0 ? Math.min(100, Math.max(1, requestedPageSize)) : 0;
+  const offset = (page - 1) * pageSize;
   try {
-    const rows = await dbAll(`
+    const baseSql = `
       SELECT fl.*, v.fleet_number, v.registration, v.make, v.model
       FROM fuel_logs fl
       JOIN vehicles v ON v.id = fl.vehicle_id
       ORDER BY fl.log_date DESC, fl.id DESC
-    `);
+    `;
+    const rows = pageSize
+      ? await dbAll(`${baseSql} LIMIT ? OFFSET ?`, [pageSize, offset])
+      : await dbAll(baseSql);
+    if (pageSize) {
+      const total = Number(await dbValue('SELECT COUNT(*) FROM fuel_logs'));
+      return jsonSuccess({ rows, pagination: { page, pageSize, total, totalPages: Math.max(1, Math.ceil(total / pageSize)) } });
+    }
     return jsonSuccess(rows);
   } catch (e) {
     return jsonError(e.message, 500);

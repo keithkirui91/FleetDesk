@@ -23,6 +23,7 @@ export default function FuelPage() {
     singular: 'Fuel Log',
     description: 'Fuel fills, litres, cost, stations, and vehicle odometer readings.',
     endpoint: '/api/fuel',
+    pageSize: 30,
     columns: [
       { key: 'log_date', label: 'Date' },
       { key: 'fleet_number', label: 'Fleet No.' },

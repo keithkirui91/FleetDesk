@@ -9,7 +9,7 @@ const config = {
   singular: 'Fuel Delivery',
   description: 'New fuel stock received at the depot. Each delivery automatically updates the tank balance as a new dip reading.',
   endpoint: '/api/fuel-depot',
-  listUrl: '/api/fuel-depot?type=stock_received',
+  listUrl: '/api/fuel-depot?transaction_type=delivery',
   fixedFields: { transaction_type: 'stock_received' },
   canEdit: false,
   columns: [

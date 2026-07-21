@@ -137,18 +137,18 @@ export async function GET(request) {
         ORDER BY km_remaining ASC
         LIMIT 8
       `),
-      dbAll(`
-        SELECT bcl.vehicle_id AS id, v.fleet_number, v.registration, v.department, bcl.change_date,
-               bcl.battery_size, bcl.battery_type, bcl.expected_lifespan_months,
-               DATE_ADD(bcl.change_date, INTERVAL bcl.expected_lifespan_months MONTH) AS due_date
-        FROM battery_change_logs bcl
-        JOIN vehicles v ON v.id = bcl.vehicle_id
-        WHERE bcl.expected_lifespan_months IS NOT NULL
-          AND bcl.id = (SELECT b2.id FROM battery_change_logs b2 WHERE b2.vehicle_id = bcl.vehicle_id ORDER BY b2.change_date DESC, b2.id DESC LIMIT 1)
-          AND DATE_ADD(bcl.change_date, INTERVAL bcl.expected_lifespan_months MONTH) <= DATE_ADD(CURDATE(), INTERVAL 60 DAY)
-        ORDER BY due_date ASC
-        LIMIT 8
-      `),
+ dbAll(`
+  SELECT bcl.vehicle_id AS id, v.fleet_number, v.registration, v.department, bcl.change_date,
+         bcl.battery_size, bcl.battery_type, bcl.expected_lifespan_hours,
+         DATE(DATE_ADD(bcl.change_date, INTERVAL bcl.expected_lifespan_hours HOUR)) AS due_date
+  FROM battery_change_logs bcl
+  JOIN vehicles v ON v.id = bcl.vehicle_id
+  WHERE bcl.expected_lifespan_hours IS NOT NULL
+    AND bcl.id = (SELECT b2.id FROM battery_change_logs b2 WHERE b2.vehicle_id = bcl.vehicle_id ORDER BY b2.change_date DESC, b2.id DESC LIMIT 1)
+    AND DATE_ADD(bcl.change_date, INTERVAL bcl.expected_lifespan_hours HOUR) <= DATE_ADD(CURDATE(), INTERVAL 60 DAY)
+  ORDER BY due_date ASC
+  LIMIT 8
+`),
       dbAll(`
         SELECT fleet_number, registration, department, licence_expiry
         FROM vehicles

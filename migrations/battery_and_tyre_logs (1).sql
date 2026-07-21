@@ -19,7 +19,7 @@ SET @col_exists = (
       AND COLUMN_NAME = 'expected_lifespan_months'
 );
 SET @sql = IF(@col_exists > 0,
-    'ALTER TABLE battery_change_logs CHANGE COLUMN expected_lifespan_months expected_lifespan_hours INT UNSIGNED NULL',
+    'ALTER TABLE battery_change_logs CHANGE COLUMN expected_lifespan_months expected_lifespan_hours INT NULL',
     'SELECT 1'
 );
 PREPARE stmt FROM @sql;
@@ -27,22 +27,21 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
 CREATE TABLE IF NOT EXISTS battery_change_logs (
-    id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    vehicle_id INT UNSIGNED NOT NULL,
-    service_record_id INT UNSIGNED NULL,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    vehicle_id INT NOT NULL,
+    service_record_id INT NULL,
     change_date DATE NOT NULL,
-    odometer INT UNSIGNED NULL,
-    quantity TINYINT UNSIGNED NOT NULL DEFAULT 1,
-    battery_size VARCHAR(60) NULL COMMENT 'e.g. 12V/70Ah',
-    battery_type VARCHAR(80) NULL COMMENT 'e.g. AGM, Lead-acid, Lithium',
-    expected_lifespan_hours INT UNSIGNED NULL,
+    odometer INT NULL,
+    quantity INT NOT NULL DEFAULT 1,
+    battery_size VARCHAR(50) NULL,
+    battery_type VARCHAR(50) NULL,
+    expected_lifespan_hours INT NULL,
     reason_for_removal TEXT NULL,
     notes TEXT NULL,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_battery_vehicle_date (vehicle_id, change_date),
-    CONSTRAINT battery_change_logs_vehicle_fk FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE,
-    CONSTRAINT battery_change_logs_service_fk FOREIGN KEY (service_record_id) REFERENCES service_records(id) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE,
+    FOREIGN KEY (service_record_id) REFERENCES service_records(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS tyre_change_logs (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,

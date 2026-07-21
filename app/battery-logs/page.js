@@ -29,7 +29,7 @@ export default function BatteryLogsPage() {
       { key: 'quantity', label: 'Qty' },
       { key: 'battery_size', label: 'Size' },
       { key: 'battery_type', label: 'Type' },
-      { key: 'expected_lifespan_months', label: 'Expected Life (months)' },
+      { key: 'expected_lifespan_hours', label: 'Expected Life (hours)' },
       { key: 'reason_for_removal', label: 'Reason for Removal' },
     ],
     fields: [
@@ -39,7 +39,7 @@ export default function BatteryLogsPage() {
       { name: 'quantity', label: 'Quantity', type: 'number', required: true },
       { name: 'battery_size', label: 'Battery Size (e.g. 12V/70Ah)', required: true },
       { name: 'battery_type', label: 'Battery Type', required: true },
-      { name: 'expected_lifespan_months', label: 'Expected Lifespan (months)', type: 'number' },
+      { name: 'expected_lifespan_hours', label: 'Expected Lifespan (hours)', type: 'number' },
       { name: 'reason_for_removal', label: 'Reason for Removal', type: 'textarea', required: true },
       { name: 'notes', label: 'Notes', type: 'textarea' },
     ],

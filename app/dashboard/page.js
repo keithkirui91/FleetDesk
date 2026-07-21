@@ -221,14 +221,7 @@ export default function DashboardPage() {
           </tbody></table></div>
         </div>
 
-        <div className="panel">
-          <div className="panel-title-row"><h2>Licence Expiring Soon</h2><Link className="view-all-link" href="/fleet">View all</Link></div>
-          <div className="table-wrap compact-table"><table><thead><tr><th>Vehicle</th><th>Licence</th></tr></thead><tbody>
-            {expiringDocs.map((row, i) => <tr key={i}><td>{row.fleet_number} <span className="muted">{row.registration}</span></td><td>{row.licence_expiry || '-'}</td></tr>)}
-            {expiringDocs.length === 0 && <tr><td className="empty" colSpan={2}>Nothing expiring soon.</td></tr>}
-          </tbody></table></div>
-        </div>
-      </div>
+    
     </AppShell>
   );
 }
